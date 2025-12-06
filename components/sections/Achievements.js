@@ -6,9 +6,9 @@ import CardSpotlight from "@/components/ui/CardSpotlight";
 import { useLanguage } from "@/components/providers/AppProviders"; // Import
 
 const certificates = [
-  { id: 1, title: "SQL Basic", issuer: "HackerRank", date: "Nov 2025", image: "/sql_basic certificate.webp", category: "Code" },
-  { id: 2, title: "SQL Intermediate", issuer: "HackerRank", date: "Nov 2025", image: "/sql_intermediate certificate.webp", category: "Code" },
-  { id: 3, title: "Python Basic", issuer: "HackerRank", date: "Nov 2025", image: "/python_basic certificate.webp", category: "Code" },
+  { id: 1, title: "SQL Basic", issuer: "HackerRank", date: "Nov 2025", image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/sql_basic%20certificate.webp", category: "Code" },
+  { id: 2, title: "SQL Intermediate", issuer: "HackerRank", date: "Nov 2025", image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/sql_intermediate%20certificate.webp", category: "Code" },
+  { id: 3, title: "Python Basic", issuer: "HackerRank", date: "Nov 2025", image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/python_basic%20certificate.webp", category: "Code" },
 ];
 
 export default function Achievements() {

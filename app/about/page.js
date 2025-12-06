@@ -13,7 +13,7 @@ const careerList = [
     period: "Jul 2024 - Des 2024",
     type: "internship",
     mode: "WFO",
-    logo: "/Disinfo.jpg"
+    logo: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Disinfo.jpg"
   },
   {
     role: "UI/UX Designer Intern",
@@ -22,7 +22,7 @@ const careerList = [
     period: "Jul 2024 - Des 2024",
     type: "internship",
     mode: "WFO",
-    logo: "/Disinfo.jpg"
+    logo: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Disinfo.jpg"
   },
 ];
 
@@ -33,7 +33,7 @@ const educationList = [
     level: "Bachelor Degree",
     period: "2025 - Present",
     location: "Jakarta, Indonesia 🇮🇩",
-    logo: "/Cakrawala.png"
+    logo: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Cakrawala.png"
   },
   {
     degree: "Software Engineering",
@@ -41,7 +41,7 @@ const educationList = [
     level: "High School",
     period: "2022 - 2025",
     location: "Jakarta, Indonesia 🇮🇩",
-    logo: "/Prestasi-prima.png"
+    logo: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Prestasi-prima.png"
   },
 ];
 

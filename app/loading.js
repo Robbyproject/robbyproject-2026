@@ -1,51 +1,61 @@
-import React from 'react';
+"use client";
+
+// Komponen Kecil untuk Kotak Abu-abu Berdenyut
+function Skeleton({ className }) {
+  return (
+    <div className={`animate-pulse bg-zinc-200 dark:bg-zinc-800 rounded-lg ${className}`} />
+  );
+}
 
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex w-full">
-      
-      {/* 1. SKELETON SIDEBAR (Kiri) */}
-      <aside className="hidden lg:flex fixed top-0 left-0 h-screen w-72 flex-col bg-[#0a0a0a] border-r border-white/5 z-50 p-6">
-         {/* Profile */}
-         <div className="flex flex-col items-center mt-6">
-            <div className="w-24 h-24 bg-zinc-800 rounded-full animate-pulse mb-4"></div>
-            <div className="w-32 h-6 bg-zinc-800 rounded animate-pulse mb-2"></div>
-            <div className="w-20 h-4 bg-zinc-900 rounded animate-pulse"></div>
-         </div>
-         <div className="h-[1px] bg-white/5 w-full my-8"></div>
-         {/* Nav Items */}
-         <div className="space-y-4">
-             {[1, 2, 3, 4, 5].map((i) => (
-                 <div key={i} className="w-full h-10 bg-zinc-900 rounded-lg animate-pulse"></div>
-             ))}
-         </div>
-      </aside>
-
-      {/* 2. SKELETON MAIN CONTENT (Kanan) */}
-      <main className="flex-1 lg:pl-72 w-full min-h-screen p-4 lg:p-10">
-         <div className="max-w-6xl mx-auto space-y-8 animate-pulse">
+    <div className="min-h-screen font-sans bg-zinc-50 dark:bg-[#0a0a0a] transition-colors duration-300">
+      <div className="flex w-full">
+        
+        {/* --- 1. SIDEBAR SKELETON (Hanya muncul di Desktop) --- */}
+        <aside className="hidden lg:flex fixed top-0 left-0 h-screen w-72 flex-col border-r border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-[#0a0a0a] z-50 p-6">
             
-            {/* Header / Title Wireframe */}
-            <div className="w-48 h-8 bg-zinc-800 rounded-lg"></div>
-            <div className="w-96 h-4 bg-zinc-900 rounded"></div>
-
-            {/* Content Wireframe (Kotak-kotak) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                {/* Kotak Besar */}
-                <div className="md:col-span-2 h-64 bg-zinc-900 rounded-2xl border border-white/5"></div>
-                {/* Kotak Kecil */}
-                <div className="h-64 bg-zinc-900 rounded-2xl border border-white/5"></div>
+            {/* Profile Area */}
+            <div className="flex flex-col items-center mb-8 pt-4">
+                <Skeleton className="w-24 h-24 rounded-full mb-4" /> {/* Foto */}
+                <Skeleton className="w-32 h-6 mb-2" /> {/* Nama */}
+                <Skeleton className="w-20 h-4" /> {/* Username */}
             </div>
+            
+            <div className="h-[1px] bg-zinc-200 dark:bg-white/5 w-full mb-6"></div>
 
-            {/* List Wireframe */}
-            <div className="space-y-4 mt-8">
-                <div className="w-full h-20 bg-zinc-900 rounded-xl border border-white/5"></div>
-                <div className="w-full h-20 bg-zinc-900 rounded-xl border border-white/5"></div>
-                <div className="w-full h-20 bg-zinc-900 rounded-xl border border-white/5"></div>
+            {/* Menu Items */}
+            <div className="space-y-3 flex-1">
+                {[1, 2, 3, 4, 5].map((i) => (
+                    <Skeleton key={i} className="w-full h-10" />
+                ))}
             </div>
+        </aside>
 
-         </div>
-      </main>
+        {/* --- 2. MAIN CONTENT SKELETON --- */}
+        <main className="flex-1 lg:pl-72 w-full min-h-screen flex flex-col pt-20 lg:pt-0">
+          <div className="max-w-6xl mx-auto px-6 py-10 lg:py-14 w-full space-y-8">
+             
+             {/* Header Title Skeleton */}
+             <div className="space-y-4">
+                 <Skeleton className="w-1/2 md:w-1/3 h-10" /> {/* Title */}
+                 <Skeleton className="w-1/3 md:w-1/4 h-6" />  {/* Subtitle */}
+             </div>
+
+             {/* Content Block Skeleton (Hero / Grid) */}
+             <div className="w-full h-64 md:h-80 rounded-2xl bg-zinc-200 dark:bg-zinc-800/50 animate-pulse border border-zinc-200 dark:border-white/5 mt-8"></div>
+             
+             {/* Small Grid Skeleton */}
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-40 w-full rounded-xl" />
+                ))}
+             </div>
+
+          </div>
+        </main>
+
+      </div>
     </div>
   );
 }

@@ -5,14 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes"; 
 import { useLanguage } from "@/components/providers/AppProviders"; 
 import { 
-  BadgeCheck, 
-  Home, 
-  User, 
-  Briefcase, 
-  Trophy, 
-  Mail, 
-  Sun, 
-  Moon 
+  BadgeCheck, Home, User, Briefcase, Trophy, Mail, Sun, Moon, Menu, X 
 } from "lucide-react";
 import { scrollToId } from "@/utils/helpers";
 
@@ -22,10 +15,16 @@ export default function Sidebar() {
   const { theme, setTheme } = useTheme();
   const { lang, toggleLang, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
+  
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
 
   const navItems = [
     { name: t.nav_home, id: "hero", icon: Home, type: "scroll" },
@@ -45,82 +44,98 @@ export default function Sidebar() {
         router.push(`/#${item.id}`);
       }
     }
+    setIsMobileOpen(false);
   };
 
   if (!mounted) return null;
 
   return (
     <>
-      <aside className="hidden lg:flex fixed top-0 left-0 h-screen w-72 flex-col bg-zinc-50 dark:bg-[#0a0a0a] border-r border-zinc-200 dark:border-white/5 z-50 transition-colors duration-300">
+      {/* --- 1. HEADER MOBILE (Profil Mini + Hamburger) --- */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-[60] px-4 py-3 flex justify-between items-center bg-zinc-50/90 dark:bg-[#0a0a0a]/90 backdrop-blur-md border-b border-zinc-200 dark:border-white/5 transition-all">
+         
+         {/* Bagian Profil Mobile (Kiri) */}
+         <div className="flex items-center gap-3">
+             {/* Foto Profil Mini (Mengecil) */}
+             <div className="relative w-9 h-9 rounded-full overflow-hidden border border-zinc-300 dark:border-white/20 shadow-sm">
+                 <Image 
+                    src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa1.webp" 
+                    alt="Profile" 
+                    fill 
+                    className="object-cover" 
+                 />
+             </div>
+             
+             {/* Nama & Badge */}
+             <div className="flex flex-col">
+                 <div className="flex items-center gap-1">
+                     <span className="font-bold text-sm text-zinc-900 dark:text-white leading-none">
+                        Robby Fabian
+                     </span>
+                     <BadgeCheck size={12} className="text-blue-500 fill-blue-500/10" strokeWidth={2.5} />
+                 </div>
+                 <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">@robbyfabian</span>
+             </div>
+         </div>
+
+         {/* Tombol Menu (Kanan) */}
+         <button 
+            onClick={() => setIsMobileOpen(!isMobileOpen)}
+            className="p-2 rounded-lg bg-zinc-200 dark:bg-white/10 text-black dark:text-white hover:bg-zinc-300 dark:hover:bg-white/20 transition-colors"
+         >
+            {isMobileOpen ? <X size={20} /> : <Menu size={20} />}
+         </button>
+      </div>
+
+      {/* --- 2. OVERLAY GELAP --- */}
+      {isMobileOpen && (
+        <div 
+            onClick={() => setIsMobileOpen(false)}
+            className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm lg:hidden"
+        ></div>
+      )}
+
+      {/* --- 3. SIDEBAR UTAMA (Desktop) --- */}
+      <aside className={`
+          fixed top-0 left-0 h-screen w-72 flex-col 
+          bg-zinc-50 dark:bg-[#0a0a0a] 
+          border-r border-zinc-200 dark:border-white/5 
+          z-[70] transition-transform duration-300 ease-in-out
+          ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} 
+          lg:translate-x-0 lg:fixed 
+      `}>
         
-        {/* Profile Section */}
+        {/* Profile Section Besar (Untuk Desktop & Menu Terbuka) */}
         <div className="flex flex-col items-center text-center p-8 pb-6">
-          
-          {/* --- FOTO PROFIL BARU (Flat Tricolor Border) --- */}
           <div className="relative w-24 h-24 mb-4">
-            {/* Bingkai Gradasi 3 Warna (Merah, Kuning, Hijau) */}
             <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-red-500 via-yellow-500 to-green-500 p-[3px]">
-                {/* Container Gambar */}
                 <div className="relative w-full h-full rounded-full overflow-hidden bg-white dark:bg-[#0a0a0a] border-2 border-white dark:border-[#0a0a0a]">
-                    <Image src="/Chisa1.webp" alt="Profile" fill className="object-cover" />
+                    <Image src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa1.webp" alt="Profile" fill className="object-cover" />
                 </div>
             </div>
           </div>
 
-          {/* --- NAMA & VERIFIED BADGE --- */}
-          {/* Menggunakan Lucide BadgeCheck dengan Fill tipis */}
-<div className="flex items-center gap-1.5 justify-center mb-1">
-    <h2 className="text-xl font-bold text-zinc-800 dark:text-white">
-      Robby Fabian
-    </h2>
-
-    {/* Icon Verifikasi */}
-    <BadgeCheck 
-        size={20} 
-        className="text-blue-500 fill-blue-500/10" // fill-... membuat bagian dalam agak berwarna
-        strokeWidth={2.5} 
-    />
-</div>
+          <div className="flex items-center gap-1.5 justify-center mb-1">
+              <h2 className="text-xl font-bold text-zinc-800 dark:text-white">Robby Fabian</h2>
+              <BadgeCheck size={20} className="text-blue-500 fill-blue-500/10" strokeWidth={2.5} />
+          </div>
           
           <p className="text-sm text-zinc-500 mb-5">@robbyfabian</p>
 
-          {/* Button Group (Theme & Lang) */}
           <div className="flex gap-3 w-full justify-center">
              <div className="flex bg-zinc-200 dark:bg-zinc-900 rounded-full p-1 border border-zinc-300 dark:border-white/5">
-                 <button 
-                    onClick={() => toggleLang('en')}
-                    className={`px-3 py-1 text-xs rounded-full font-bold transition-all ${lang === 'en' ? 'bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm' : 'text-zinc-500'}`}
-                 >
-                    EN
-                 </button>
-                 <button 
-                    onClick={() => toggleLang('id')}
-                    className={`px-3 py-1 text-xs rounded-full font-bold transition-all ${lang === 'id' ? 'bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm' : 'text-zinc-500'}`}
-                 >
-                    ID
-                 </button>
+                 <button onClick={() => toggleLang('en')} className={`px-3 py-1 text-xs rounded-full font-bold transition-all ${lang === 'en' ? 'bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm' : 'text-zinc-500'}`}>EN</button>
+                 <button onClick={() => toggleLang('id')} className={`px-3 py-1 text-xs rounded-full font-bold transition-all ${lang === 'id' ? 'bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm' : 'text-zinc-500'}`}>ID</button>
              </div>
-
              <div className="flex bg-zinc-200 dark:bg-zinc-900 rounded-full p-1 border border-zinc-300 dark:border-white/5">
-                 <button 
-                    onClick={() => setTheme('light')}
-                    className={`p-1 rounded-full transition-all ${theme === 'light' ? 'bg-white text-yellow-500 shadow-sm' : 'text-zinc-500'}`}
-                 >
-                    <Sun size={14}/>
-                 </button>
-                 <button 
-                    onClick={() => setTheme('dark')}
-                    className={`p-1 rounded-full transition-all ${theme === 'dark' ? 'bg-zinc-700 text-white shadow-sm' : 'text-zinc-500'}`}
-                 >
-                    <Moon size={14}/>
-                 </button>
+                 <button onClick={() => setTheme('light')} className={`p-1 rounded-full transition-all ${theme === 'light' ? 'bg-white text-yellow-500 shadow-sm' : 'text-zinc-500'}`}><Sun size={14}/></button>
+                 <button onClick={() => setTheme('dark')} className={`p-1 rounded-full transition-all ${theme === 'dark' ? 'bg-zinc-700 text-white shadow-sm' : 'text-zinc-500'}`}><Moon size={14}/></button>
              </div>
           </div>
         </div>
 
         <div className="h-[1px] bg-zinc-200 dark:bg-white/5 w-full mb-4"></div>
 
-        {/* Navigation Menu */}
         <nav className="flex-1 overflow-y-auto px-4 space-y-1 custom-scrollbar">
           {navItems.map((item) => {
             const isActive = item.type === "page" ? pathname === item.path : false;
@@ -141,25 +156,13 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Footer */}
         <div className="p-6 mt-auto">
-           
-
            <div className="text-center">
               <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold tracking-wider">{t.copyright} &copy; 2025</p>
               <p className="text-[10px] text-zinc-500 dark:text-zinc-600 mt-1">{t.rights}</p>
            </div>
         </div>
       </aside>
-
-      {/* Mobile Nav */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-lg border-t border-zinc-200 dark:border-white/10 z-50 px-6 py-3 flex justify-between items-center transition-colors duration-300">
-         {navItems.slice(0, 5).map((item) => (
-             <button key={item.name} onClick={() => handleNavigation(item)} className="flex flex-col items-center gap-1 text-zinc-500 dark:text-zinc-400 hover:text-cyan-600 dark:hover:text-cyan-400">
-                 <item.icon size={20} />
-             </button>
-         ))}
-      </div>
     </>
   );
 }

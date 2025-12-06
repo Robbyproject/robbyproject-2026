@@ -5,14 +5,13 @@ import { initialGallery } from "@/data";
 import CardSpotlight from "@/components/ui/CardSpotlight"; 
 import { AnimatePresence, motion } from "framer-motion"; 
 import { X, Eye } from "lucide-react"; 
-import { useLanguage } from "@/components/providers/AppProviders"; // Import
+import { useLanguage } from "@/components/providers/AppProviders"; 
 import { 
   SiAdobephotoshop, SiHtml5, SiCss3, SiJavascript, SiPhp, SiMysql, 
   SiReact, SiNextdotjs, SiTailwindcss, SiAdobeillustrator 
 } from "react-icons/si";
 
-// (techIcons definition sama seperti sebelumnya...)
-const techIcons = { /* ... kode sama ... */ 
+const techIcons = {
   "Photoshop": { icon: SiAdobephotoshop, color: "#31A8FF" },
   "Illustrator": { icon: SiAdobeillustrator, color: "#FF9A00" },
   "HTML": { icon: SiHtml5, color: "#E34F26" },
@@ -27,11 +26,12 @@ const techIcons = { /* ... kode sama ... */
 
 export default function Gallery() {
   const [selectedProject, setSelectedProject] = useState(null);
-  const { t } = useLanguage(); // Panggil Hooks
+  const { t } = useLanguage();
 
   return (
     <>
       <section id="galeri" className="py-4">
+        {/* GRID SUDAH BENAR: 1 Kolom (Mobile), 2 (Tablet), 3 (Desktop) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {initialGallery.map((item) => (
             <CardSpotlight 
@@ -49,10 +49,9 @@ export default function Gallery() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                   
-                  {/* --- BUTTON TRANSLATED --- */}
                   <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
                       <button className="flex items-center gap-2 bg-white text-black px-5 py-2.5 rounded-full font-bold text-xs transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 shadow-xl hover:scale-105">
-                          <Eye size={16} /> {t.btn_view_project} {/* <-- Translate */}
+                          <Eye size={16} /> {t.btn_view_project}
                       </button>
                   </div>
 
@@ -90,7 +89,7 @@ export default function Gallery() {
         </div>
       </section>
 
-      {/* Popup Lightbox (Kode sama seperti sebelumnya...) */}
+      {/* Popup Lightbox */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div 

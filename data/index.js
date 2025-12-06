@@ -26,7 +26,7 @@ export const initialGallery = [
     category: "Sport", 
     title: "Paris Saint Germain", 
     description: "PSG Poster Design for matchday.", 
-    image: "/design1.webp",
+    image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/design1.webp",
     tech: ["Photoshop"] // <--- Tambahkan ini
   },
   { 
@@ -34,7 +34,7 @@ export const initialGallery = [
     category: "Sport", 
     title: "Liverpool FC", 
     description: "Liverpool Poster Design concept art.", 
-    image: "/design2.webp",
+    image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/design2.webp",
     tech: ["Photoshop"] 
   },
   { 
@@ -42,7 +42,7 @@ export const initialGallery = [
     category: "Sport", 
     title: "Kylian Mbappe", 
     description: "Kylian Mbappe Real Madrid Player introduction.", 
-    image: "/design3.webp",
+    image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/design3.webp",
     tech: ["Photoshop"] 
   },
   { 
@@ -50,7 +50,7 @@ export const initialGallery = [
     category: "Poster", 
     title: "HuoHuo", 
     description: "FanDesign HuoHuo From HSR.", 
-    image: "/design4.webp",
+    image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/design4.webp",
     tech: ["Photoshop"] 
   },
   { 
@@ -58,7 +58,7 @@ export const initialGallery = [
     category: "Poster", 
     title: "Acheron", 
     description: "FanDesign Acheron From HSR.", 
-    image: "/design5.webp",
+    image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/design5.webp",
     tech: ["Photoshop"] 
   },
   { 
@@ -66,7 +66,7 @@ export const initialGallery = [
     category: "Poster", 
     title: "Shorekeeper", 
     description: "FanDesign Shorekeeper From Wuthering Waves.", 
-    image: "/design6.webp",
+    image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/design6.webp",
     tech: ["Photoshop"] 
   },
   { 
@@ -74,7 +74,7 @@ export const initialGallery = [
     category: "Website", 
     title: "Photo Gallery", 
     description: "Website storage for football photos.", 
-    image: "/Project1.webp",
+    image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/project1.webp",
     tech: ["PHP","HTML", "CSS", "Javascript", "MySQL"] // <--- Sesuaikan
   },
   { 
@@ -82,7 +82,7 @@ export const initialGallery = [
     category: "Website", 
     title: "Restaurant Cashier", 
     description: "Cashier system with PHP and Database.", 
-    image: "/Project2.webp",
+    image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/project2.webp",
     tech: ["PHP","HTML", "CSS", "Javascript", "MySQL"] // <--- Sesuai Request
   },
   { 
@@ -90,7 +90,7 @@ export const initialGallery = [
     category: "Poster", 
     title: "Rani Maid ZZZ", 
     description: "Fanmade Poster.", 
-    image: "/Rani.jpg",
+    image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Rani.jpg",
     tech: ["Photoshop"] // <--- Sesuai Request
   },
   { 
@@ -98,7 +98,7 @@ export const initialGallery = [
     category: "Poster", 
     title: "The Witcher 3 Wild Hunt", 
     description: "Fanmade Poster.", 
-    image: "/Witcher.jpg",
+    image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Witcher.jpg",
     tech: ["Photoshop"] // <--- Sesuai Request
   },
   { 
@@ -106,7 +106,7 @@ export const initialGallery = [
     category: "Poster", 
     title: "Pray For Sumatera", 
     description: "SGA Organization Post.", 
-    image: "/Sumatera.jpg",
+    image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Sumatera.jpg",
     tech: ["Photoshop"] // <--- Sesuai Request
   },
   { 
@@ -114,7 +114,7 @@ export const initialGallery = [
     category: "Poster",  
     title: "Open Donation", 
     description: "SGA Organization Post.", 
-    image: "/Poster-donasi.jpg",
+    image: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Poster-Donasi.jpg",
     tech: ["Photoshop"] // <--- Sesuai Request
   },
 ];

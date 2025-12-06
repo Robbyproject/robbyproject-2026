@@ -19,7 +19,7 @@ export default function LoadingScreen({ onComplete }) {
             exit={{ opacity: 0, transition: { duration: 1.5 } }}
         >
             <motion.div animate={{ y: [-15, 15, -15] }} transition={{ duration: 3, repeat: Infinity }} className="relative w-48 h-48 mb-8">
-                <Image src="/Alya-load.png" alt="Loading..." fill unoptimized className="object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" />
+                <Image src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Alya-Load.png" alt="Loading..." fill unoptimized className="object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" />
             </motion.div>
             <div className="w-64 flex flex-col items-center gap-4">
                 <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">

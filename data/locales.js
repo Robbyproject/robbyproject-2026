@@ -16,6 +16,10 @@ export const translations = {
     hero_skills: "Skills & Tools",
     hero_video: "My Wife",
 
+    alya_name: "Alisa Mikhailovna Kujou",
+    alya_role: "Roshidere (Alya Sometimes Hides Her Feelings in Russian)",
+    alya_desc: "The main heroine with silver hair and blue eyes. A mix of Russian and Japanese heritage, she serves as the Student Council Treasurer. Often seen as a solitary 'Ice Queen' due to her perfect appearance, she secretly hides her affectionate feelings by muttering them in Russian.",
+
     // About Page
     about_title: "About",
     about_subtitle: "A brief introduction to who I am.",
@@ -97,6 +101,10 @@ export const translations = {
     hero_desc: "Saya adalah Desainer Grafis dan Front-End Developer yang ahli dalam menciptakan antarmuka digital yang menarik, bersih, dan fungsional. Saya menggunakan Next.js, TypeScript, dan Tailwind CSS untuk membangun pengalaman pengguna yang responsif, menggabungkan desain kreatif dengan presisi teknis. Sebagai individu yang detail dan kolaboratif, saya berkomitmen memberikan hasil berkualitas tinggi, modern, dan ramah pengguna.",
     hero_skills: "Keahlian & Alat",
     hero_video: "Istri Saya",
+
+    alya_name: "Alisa Mikhailovna Kujou",
+    alya_role: "Roshidere (Alya Sometimes Hides Her Feelings in Russian)",
+    alya_desc: "Tokoh utama wanita berambut perak dan bermata biru. Gadis keturunan Rusia-Jepang ini menjabat sebagai Bendahara OSIS. Sering dianggap sebagai 'Ratu Es' yang menyendiri karena penampilannya yang sempurna, ia sebenarnya menyembunyikan perasaan malunya dengan bergumam dalam bahasa Rusia.",
 
     // About Page
     about_title: "Tentang",
