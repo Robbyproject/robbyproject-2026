@@ -1,14 +1,15 @@
 export const translations = {
   en: {
-    // Sidebar
+    // --- SIDEBAR ---
     nav_home: "Home",
     nav_about: "About",
     nav_projects: "Projects",
     nav_achievements: "Achievements",
-    nav_contact: "Contact", // <-- Ganti Music jadi Contact
+    nav_contact: "Contact",
     nav_login: "Login",
+    nav_anime: "Anime List",
 
-    // Hero Section
+    // --- HERO SECTION ---
     hero_greeting: "Hi, I'm",
     hero_based: "Based in Indonesia",
     hero_remote: "Remote / Onsite",
@@ -16,11 +17,43 @@ export const translations = {
     hero_skills: "Skills & Tools",
     hero_video: "My Wife",
 
+    // --- KARAKTER 1: ALYA ---
     alya_name: "Alisa Mikhailovna Kujou",
     alya_role: "Roshidere (Alya Sometimes Hides Her Feelings in Russian)",
     alya_desc: "The main heroine with silver hair and blue eyes. A mix of Russian and Japanese heritage, she serves as the Student Council Treasurer. Often seen as a solitary 'Ice Queen' due to her perfect appearance, she secretly hides her affectionate feelings by muttering them in Russian.",
+    alya_job_label: "Role",
+    alya_job_val: "Student Council Treasurer",
+    alya_origin_label: "Heritage",
+    alya_origin_val: "Russian-Japanese 🇷🇺🇯🇵",
 
-    // About Page
+    // --- KARAKTER 2: CASTORICE ---
+    wife2_name: "Castorice",
+    wife2_role: "Honkai: Star Rail",
+    wife2_desc: "From the land that worships death, Aidonia, where snow falls endlessly. Castorice, daughter of the River of Souls, Heir of Chrysos seeking the Coreflame Death, sets forth. You must guard the wailing of souls and embrace the silence of destiny.",
+    wife2_job_label: "Title",
+    wife2_job_val: "Heir of Chrysos",
+    wife2_origin_label: "Origin",
+    wife2_origin_val: "Aidonia ❄️",
+
+    // --- KARAKTER 3: SHOREKEEPER ---
+    wife3_name: "Shorekeeper",
+    wife3_role: "Wuthering Waves",
+    wife3_desc: "A mysterious guardian associated with the Black Shores. She possesses an ethereal and calm demeanor, often guiding Rovers through their journey with cryptic yet profound wisdom.",
+    wife3_job_label: "Affiliation",
+    wife3_job_val: "Black Shores",
+    wife3_origin_label: "Element",
+    wife3_origin_val: "Spectro ✨",
+
+    // --- KARAKTER 4: KUCHIBA CHISA ---
+    wife4_name: "Kuchiba Chisa",
+    wife4_role: "Wuthering Waves",
+    wife4_desc: "Chisa is a playable Havoc Mutant Resonator in Wuthering Waves. Chisa is a conscientious, level-headed student from the Startorch Academy. To her, everything can be broken down, analyzed, and resolved, with the exception of human bonding. Bonds can be severed, but this fragility is what makes them precious.",
+    wife4_job_label: "Affiliation",
+    wife4_job_val: "Startorch Academy",
+    wife4_origin_label: "Element",
+    wife4_origin_val: "Havoc 🌀",
+
+    // --- ABOUT PAGE ---
     about_title: "About",
     about_subtitle: "A brief introduction to who I am.",
     about_intro_1: "Hello there! Thank you for visiting my personal website. I am a Graphic Designer and Front-End Developer experienced in creating visually appealing designs and building responsive, modern, and user-friendly digital interfaces.",
@@ -29,72 +62,69 @@ export const translations = {
     about_career: "Career",
     about_edu: "Education",
     btn_resume: "Resume",
-    job_role: "Fullstack Developer",
-    job_type: "Fulltime",
-    job_remote: "Remote",
-
-    // Projects / Gallery
+    
+    // --- PROJECTS ---
     proj_title: "Projects",
     proj_subtitle: "A selection of my favorite works.",
     btn_view_project: "View Project",
 
-    // Achievements
+    // --- ACHIEVEMENTS ---
     ach_title: "Achievements",
     ach_search: "Search certificates...",
     btn_view_cred: "View Credential",
 
-    // Music Room
+    // --- MUSIC ROOM ---
     music_title: "Music Room",
     music_subtitle: "Explore music and playlists.",
     music_search: "Search...",
     music_filter: "Filter...",
 
-    // --- CONTACT PAGE (BARU) ---
+    // --- CONTACT PAGE ---
     contact_title: "Contact",
     contact_subtitle: "Let's get in touch.",
     contact_socials: "Find me on social media",
-    
-    // Card Labels
     email_title: "Stay in Touch",
     email_desc: "Reach out via email for inquiries or collaborations.",
     btn_email: "Go to Gmail",
-
     ig_title: "Follow My Journey",
     ig_desc: "Follow my creative journey.",
     btn_ig: "Go to Instagram",
-
     li_title: "Let's Connect",
     li_desc: "Connect with me professionally.",
     btn_li: "Go to Linkedin",
-
     wa_title: "Chat on WhatsApp",
     wa_desc: "Send a message directly on WhatsApp for quick communication.",
     btn_wa: "Go to Whatsapp",
-
     gh_title: "Explore the Code",
     gh_desc: "Explore my open-source work.",
     btn_gh: "Go to Github",
-
     be_title: "Design Portfolio",
     be_desc: "View my design projects on Behance.",
     btn_be: "Go to Behance",
+
+    // --- ANIME LIST ---
+    anime_title: "My Watchlist",
+    anime_subtitle: "A collection of anime I've watched and my personal ratings.",
+    anime_search: "Search anime title...",
+    btn_read_synopsis: "Read Synopsis",
     
-    // Common
+    // --- COMMON ---
     copyright: "COPYRIGHT",
     rights: "All rights reserved.",
     built_with: "Built with Next.js"
   },
   
   id: {
-    // Sidebar
+    // --- SIDEBAR ---
     nav_home: "Beranda",
     nav_about: "Tentang",
     nav_projects: "Proyek",
     nav_achievements: "Pencapaian",
-    nav_contact: "Kontak", // <-- Ganti
+    nav_contact: "Kontak",
     nav_login: "Masuk",
+    nav_anime: "Daftar Anime",
 
-    // Hero Section
+    // --- HERO SECTION ---
     hero_greeting: "Hai, Saya",
     hero_based: "Berbasis di Indonesia",
     hero_remote: "Remote / Onsite",
@@ -102,11 +132,43 @@ export const translations = {
     hero_skills: "Keahlian & Alat",
     hero_video: "Istri Saya",
 
+    // --- KARAKTER 1: ALYA ---
     alya_name: "Alisa Mikhailovna Kujou",
     alya_role: "Roshidere (Alya Sometimes Hides Her Feelings in Russian)",
     alya_desc: "Tokoh utama wanita berambut perak dan bermata biru. Gadis keturunan Rusia-Jepang ini menjabat sebagai Bendahara OSIS. Sering dianggap sebagai 'Ratu Es' yang menyendiri karena penampilannya yang sempurna, ia sebenarnya menyembunyikan perasaan malunya dengan bergumam dalam bahasa Rusia.",
+    alya_job_label: "Posisi",
+    alya_job_val: "Bendahara OSIS",
+    alya_origin_label: "Keturunan",
+    alya_origin_val: "Rusia-Jepang 🇷🇺🇯🇵",
 
-    // About Page
+    // --- KARAKTER 2: CASTORICE ---
+    wife2_name: "Castorice",
+    wife2_role: "Honkai: Star Rail",
+    wife2_desc: "Negeri yang memuja kematian, Aidonia, tempat salju turun tanpa henti, hari ini telah tertidur lelap. Castorice, putri Sungai Jiwa, Pewaris Chrysos yang mencari Kematian Coreflame, berangkat. Kau harus menjaga ratapan jiwa dan merangkul kesunyian takdir.",
+    wife2_job_label: "Gelar",
+    wife2_job_val: "Pewaris Chrysos",
+    wife2_origin_label: "Asal",
+    wife2_origin_val: "Aidonia ❄️",
+
+    // --- KARAKTER 3: SHOREKEEPER ---
+    wife3_name: "Shorekeeper",
+    wife3_role: "Wuthering Waves",
+    wife3_desc: "Tokoh utama wanita berambut perak dan bermata biru. Gadis keturunan Rusia-Jepang ini menjabat sebagai Bendahara OSIS. Sering dianggap sebagai 'Ratu Es' yang menyendiri karena penampilannya yang sempurna, ia sebenarnya menyembunyikan perasaan malunya dengan bergumam dalam bahasa Rusia.",
+    wife3_job_label: "Afiliasi",
+    wife3_job_val: "Black Shores",
+    wife3_origin_label: "Elemen",
+    wife3_origin_val: "Spectro ✨",
+
+    // --- KARAKTER 4: KUCHIBA CHISA ---
+    wife4_name: "Kuchiba Chisa",
+    wife4_role: "Wuthering Waves",
+    wife4_desc: "Chisa adalah karakter yang dapat dimainkan sebagai Havoc Mutant Resonator di Wuthering Waves. Chisa adalah seorang siswa yang teliti dan tenang dari Akademi Startorch. Baginya, segala sesuatu dapat diurai, dianalisis, dan diselesaikan, kecuali ikatan antarmanusia. Ikatan dapat diputus, tetapi kerentanan inilah yang membuatnya berharga.",
+    wife4_job_label: "Afiliasi",
+    wife4_job_val: "Startorch Academy",
+    wife4_origin_label: "Elemen",
+    wife4_origin_val: "Havoc 🌀",
+    
+    // --- ABOUT PAGE ---
     about_title: "Tentang",
     about_subtitle: "Perkenalan singkat tentang siapa saya.",
     about_intro_1: "Halo! Terima kasih sudah mengunjungi website pribadi saya. Saya adalah seorang Graphic Designer dan Front-End Developer yang berpengalaman dalam menciptakan desain visual yang menarik serta antarmuka digital yang responsif, modern, dan mudah digunakan.",
@@ -115,55 +177,53 @@ export const translations = {
     about_career: "Karir",
     about_edu: "Pendidikan",
     btn_resume: "Unduh Resume",
-    job_role: "Pengembang Fullstack",
-    job_type: "Purna Waktu",
-    job_remote: "Jarak Jauh",
 
-    // Projects / Gallery
+    // --- PROJECTS ---
     proj_title: "Proyek",
     proj_subtitle: "Pilihan karya favorit saya.",
     btn_view_project: "Lihat Proyek",
 
-    // Achievements
+    // --- ACHIEVEMENTS ---
     ach_title: "Pencapaian",
     ach_search: "Cari sertifikat...",
     btn_view_cred: "Lihat Kredensial",
 
-    // Music Room
+    // --- MUSIC ROOM ---
     music_title: "Ruang Musik",
     music_subtitle: "Jelajahi musik dan playlist.",
     music_search: "Cari...",
     music_filter: "Saring...",
 
+    // --- CONTACT PAGE ---
     contact_title: "Kontak",
     contact_subtitle: "Mari terhubung.",
     contact_socials: "Temukan saya di sosial media",
-
     email_title: "Tetap Terhubung",
     email_desc: "Hubungi via email untuk pertanyaan atau kolaborasi.",
     btn_email: "Buka Gmail",
-
     ig_title: "Ikuti Perjalanan Saya",
     ig_desc: "Ikuti perjalanan kreatif saya.",
     btn_ig: "Buka Instagram",
-
     li_title: "Mari Terhubung",
     li_desc: "Terhubung dengan saya secara profesional.",
     btn_li: "Buka Linkedin",
-
     wa_title: "Chat di WhatsApp",
     wa_desc: "Kirim pesan langsung di WhatsApp untuk komunikasi cepat.",
     btn_wa: "Buka Whatsapp",
-
     gh_title: "Jelajahi Kode",
     gh_desc: "Lihat karya open-source saya.",
     btn_gh: "Buka Github",
-
     be_title: "Portofolio Desain",
     be_desc: "Lihat proyek desain saya di Behance.",
     btn_be: "Buka Behance",
 
-    // Common
+    // --- ANIME LIST ---
+    anime_title: "Tontonan Saya",
+    anime_subtitle: "Koleksi anime yang sudah saya tonton beserta rating pribadi.",
+    anime_search: "Cari judul anime...",
+    btn_read_synopsis: "Baca Sinopsis",
+
+    // --- COMMON ---
     copyright: "HAK CIPTA",
     rights: "Hak cipta dilindungi.",
     built_with: "Dibuat dengan Next.js"
