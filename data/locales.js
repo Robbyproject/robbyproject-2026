@@ -6,8 +6,11 @@ export const translations = {
     nav_projects: "Projects",
     nav_achievements: "Achievements",
     nav_contact: "Contact",
+    nav_waifu: "Waifu List",
     nav_login: "Login",
     nav_anime: "Anime List",
+    nav_services: "Services",
+    nav_dashboard: "Dashboard",
 
     // --- HERO SECTION ---
     hero_greeting: "Hi, I'm",
@@ -16,6 +19,10 @@ export const translations = {
     hero_desc: "I am a Graphic Designer and Front-End Developer skilled in creating visually appealing, clean, and functional digital interfaces. I work with Next.js, TypeScript, and Tailwind CSS to build responsive user experiences, combining creative design with technical precision. As a detail-oriented and collaborative individual, I am committed to delivering high-quality, modern, and user-friendly results.",
     hero_skills: "Skills & Tools",
     hero_video: "My Wife",
+
+    // --- WAIFU LIST ---
+    waifu_title: "Waifu List",
+    waifu_subtitle: "A collection of characters that stole my heart.",
 
     // --- KARAKTER 1: ALYA ---
     alya_name: "Alisa Mikhailovna Kujou",
@@ -107,6 +114,29 @@ export const translations = {
     anime_subtitle: "A collection of anime I've watched and my personal ratings.",
     anime_search: "Search anime title...",
     btn_read_synopsis: "Read Synopsis",
+
+    // 👇 TAMBAH SECTION BARU: SERVICES PAGE
+    services_title: "My Services",
+    services_subtitle: "Professional solutions for your digital needs.",
+    
+    // Service 1: Graphic Design
+    serv_graphic_title: "Graphic Design",
+    serv_graphic_desc: "Creating visually stunning designs that capture attention and communicate your brand message effectively.",
+    serv_graphic_list: "Social Media Feeds, Event Posters, Banners, Branding Assets",
+
+    // Service 2: Web Development
+    serv_web_title: "Web Development",
+    serv_web_desc: "Building fast, responsive, and SEO-friendly websites using modern technologies like Next.js and Tailwind CSS.",
+    serv_web_list: "Landing Pages, Company Profiles, Portfolio Websites, Frontend Logic",
+
+    // Service 3: UI/UX Design
+    serv_uiux_title: "UI/UX Design",
+    serv_uiux_desc: "Designing intuitive and aesthetic user interfaces with a focus on seamless user experience.",
+    serv_uiux_list: "Mobile App Design, Web Design, Wireframing, Prototyping (Figma)",
+
+    // CTA
+    serv_cta_title: "Ready to start a project?",
+    serv_cta_btn: "Let's Talk",
     
     // --- COMMON ---
     copyright: "COPYRIGHT",
@@ -121,8 +151,11 @@ export const translations = {
     nav_projects: "Proyek",
     nav_achievements: "Pencapaian",
     nav_contact: "Kontak",
+    nav_waifu: "Daftar Waifu",
     nav_login: "Masuk",
     nav_anime: "Daftar Anime",
+    nav_services: "Layanan",
+    nav_dashboard: "Dashboard",
 
     // --- HERO SECTION ---
     hero_greeting: "Hai, Saya",
@@ -131,6 +164,10 @@ export const translations = {
     hero_desc: "Saya adalah Desainer Grafis dan Front-End Developer yang ahli dalam menciptakan antarmuka digital yang menarik, bersih, dan fungsional. Saya menggunakan Next.js, TypeScript, dan Tailwind CSS untuk membangun pengalaman pengguna yang responsif, menggabungkan desain kreatif dengan presisi teknis. Sebagai individu yang detail dan kolaboratif, saya berkomitmen memberikan hasil berkualitas tinggi, modern, dan ramah pengguna.",
     hero_skills: "Keahlian & Alat",
     hero_video: "Istri Saya",
+
+    // --- WAIFU LIST ---
+    waifu_title: "Daftar Waifu",
+    waifu_subtitle: "Koleksi karakter yang mencuri hati saya.",
 
     // --- KARAKTER 1: ALYA ---
     alya_name: "Alisa Mikhailovna Kujou",
@@ -222,6 +259,29 @@ export const translations = {
     anime_subtitle: "Koleksi anime yang sudah saya tonton beserta rating pribadi.",
     anime_search: "Cari judul anime...",
     btn_read_synopsis: "Baca Sinopsis",
+
+    // 👇 TAMBAH SECTION BARU: SERVICES PAGE
+    services_title: "Layanan Saya",
+    services_subtitle: "Solusi profesional untuk kebutuhan digital Anda.",
+
+    // Service 1
+    serv_graphic_title: "Desain Grafis",
+    serv_graphic_desc: "Membuat desain visual yang menarik perhatian dan mengkomunikasikan pesan brand Anda secara efektif.",
+    serv_graphic_list: "Konten Sosmed, Poster Acara, Banner, Aset Branding",
+
+    // Service 2
+    serv_web_title: "Pengembangan Web",
+    serv_web_desc: "Membangun website yang cepat, responsif, dan ramah SEO menggunakan teknologi modern seperti Next.js dan Tailwind CSS.",
+    serv_web_list: "Landing Page, Company Profile, Website Portofolio, Logika Frontend",
+
+    // Service 3
+    serv_uiux_title: "Desain UI/UX",
+    serv_uiux_desc: "Merancang antarmuka pengguna yang intuitif dan estetis dengan fokus pada pengalaman pengguna yang mulus.",
+    serv_uiux_list: "Desain Aplikasi Mobile, Desain Web, Wireframing, Prototyping (Figma)",
+
+    // CTA
+    serv_cta_title: "Siap memulai proyek?",
+    serv_cta_btn: "Hubungi Saya",
 
     // --- COMMON ---
     copyright: "HAK CIPTA",

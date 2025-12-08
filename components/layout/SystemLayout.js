@@ -1,64 +1,67 @@
 "use client";
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation"; 
+import { motion, AnimatePresence, useScroll, useSpring } from "framer-motion"; // Tambah useScroll & useSpring
 import LoadingScreen from "@/components/layout/LoadingScreen"; 
-import InteractiveIntro from "@/components/features/InteractiveIntro"; // <-- IMPORT YANG BARU
 
 export default function SystemLayout({ children }) {
+  const pathname = usePathname();
   const [stage, setStage] = useState(null);
 
-  useEffect(() => {
-    // Cek Session: Kalau sudah pernah masuk (isVisited), langsung konten
-    const isVisited = sessionStorage.getItem("isVisited");
+  // --- LOGIC SCROLL PROGRESS ---
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
 
+  useEffect(() => {
+    const isVisited = sessionStorage.getItem("isVisited");
     if (isVisited) {
       setStage("content");
     } else {
-      // Kalau belum, mulai dari Loading -> Intro
       setStage("init");
     }
   }, []);
 
-  // 1. Selesai Loading Alya -> Masuk Intro
   const handleInitComplete = () => {
-    setStage("intro");
+    sessionStorage.setItem("isVisited", "true");
+    setStage("content");
   };
 
-  // 2. Klik Enter di Intro -> Masuk Konten
-  const handleEnterSystem = () => {
-    sessionStorage.setItem("isVisited", "true"); // Tandai sudah berkunjung
-    setStage("content"); 
-  };
-
-  // Render Layar Hitam saat cek session
   if (stage === null) return <div className="fixed inset-0 bg-black z-[9999]" />;
 
   return (
     <>
-      {/* TAHAP 1: LOADING SCREEN (Alya Glitch) */}
       <AnimatePresence>
         {stage === "init" && (
           <LoadingScreen onComplete={handleInitComplete} />
         )}
       </AnimatePresence>
 
-      {/* TAHAP 2: INTERACTIVE INTRO (Ganti Lockscreen Lama) */}
-      <AnimatePresence>
-        {stage === "intro" && (
-          <InteractiveIntro onEnter={handleEnterSystem} />
-        )}
-      </AnimatePresence>
-
-      {/* TAHAP 3: KONTEN WEBSITE */}
       {stage === "content" && (
-        <motion.div
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }}     
-            transition={{ duration: 1, ease: "easeOut" }}               
-            className="w-full h-full"
-        >
-            {children}
-        </motion.div>
+        <div className="w-full h-full bg-zinc-50 dark:bg-[#0a0a0a]">
+            
+            {/* 👇 PROGRESS BAR DI PALING ATAS */}
+            <motion.div
+                className="fixed top-0 left-0 right-0 h-1 bg-cyan-500 z-[9999] origin-left"
+                style={{ scaleX }}
+            />
+
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={pathname} 
+                    initial={{ opacity: 0, y: 10 }} 
+                    animate={{ opacity: 1, y: 0 }}     
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}               
+                    className="w-full min-h-screen"
+                >
+                    {children}
+                </motion.div>
+            </AnimatePresence>
+        </div>
       )}
     </>
   );

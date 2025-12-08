@@ -18,8 +18,8 @@ export default function Home() {
                 1. 'pt-28' (Sebelumnya pt-20): Agar konten turun ke bawah header mobile.
                 2. 'flex-1': Agar mengisi sisa ruang di sebelah sidebar sticky.
             */}
-            <main className="flex-1 w-full min-h-screen flex flex-col pt-28 lg:pt-0 transition-all">
-                <div className="max-w-6xl mx-auto px-4 py-8 lg:py-10 flex-1 w-full">
+            <main className="flex-1 w-full pt-24 lg:pt-0 lg:pl-0 transition-all">
+                <div className="max-w-6xl mx-auto px-6 py-8 lg:px-12 lg:py-16">
                     <Hero />
                 </div>
             </main>

@@ -130,9 +130,6 @@ export default function AboutPage() {
                 </div>
              </div>
              
-             <footer className="py-8 text-zinc-500 dark:text-zinc-600 text-sm mt-12 border-t border-zinc-200 dark:border-white/5 transition-colors">
-                 <p>© 2025 Robby Fabian.</p>
-             </footer>
 
           </div>
         </main>
