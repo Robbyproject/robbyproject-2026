@@ -1,14 +1,15 @@
 "use client";
+
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation"; // useRouter tidak lagi wajib untuk navigasi, tapi boleh dibiarkan
 import { useTheme } from "next-themes";
 import { useLanguage } from "@/components/providers/AppProviders";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, User, Briefcase, Trophy, Mail, Sun, Moon, Menu,
   Clapperboard, Heart, Zap, LayoutDashboard, ChevronDown, Gamepad2,
-  ShoppingBag, X, LogOut
+  ShoppingBag
 } from "lucide-react";
 import { scrollToId } from "@/utils/helpers";
 
@@ -16,7 +17,7 @@ const PROFILE_IMG = "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
+  // const router = useRouter(); // Tidak diperlukan lagi karena kita pakai window.location
   const { theme, setTheme } = useTheme();
   const { lang, toggleLang, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
@@ -27,14 +28,14 @@ export default function Sidebar() {
     setMounted(true);
   }, []);
 
-  // Tutup sidebar mobile saat pindah halaman
+  // Tutup sidebar mobile saat pindah halaman (terjadi otomatis saat hard refresh, tapi good practice)
   useEffect(() => {
     setIsMobileOpen(false);
   }, [pathname]);
 
   // Logic: Auto expand dropdown parent jika kita berada di child route
   useEffect(() => {
-    if (pathname.startsWith("/anime") || pathname.startsWith("/waifu")) {
+    if (pathname && (pathname.startsWith("/anime") || pathname.startsWith("/waifu"))) {
       setOpenDropdown("Entertainment");
     }
   }, [pathname]);
@@ -60,30 +61,35 @@ export default function Sidebar() {
     { name: t.nav_contact, path: "/contact", icon: Mail, type: "page" },
   ], [t]);
 
-  // --- BAGIAN INI YANG SAYA PERBAIKI ---
+  // --- PERBAIKAN LOGIC NAVIGASI ---
   const handleNavigation = (item) => {
+    // 1. Handle Dropdown Toggle
     if (item.type === "dropdown") {
       setOpenDropdown(openDropdown === item.id ? null : item.id);
       return;
     }
 
+    // 2. Handle Page Navigation (HARD REFRESH)
     if (item.type === "page") {
-      // FIX UTAMA: Jika ke Dashboard, paksa Hard Refresh (window.location)
-      // Ini membersihkan memori dan memastikan data di-fetch ulang dari nol
-      if (item.path === "/dashboard") {
-        window.location.href = item.path;
-      } else {
-        router.push(item.path); // Halaman lain tetap pakai Soft Navigation (cepat)
-      }
-    } else if (item.type === "scroll") {
+      // Menggunakan window.location.href memaksa browser memuat ulang halaman sepenuhnya.
+      // Ini mematikan fitur SPA (Single Page App) navigation untuk link ini,
+      // sehingga semua state/skeleton akan di-reset dari nol.
+      window.location.href = item.path;
+    }
+
+    // 3. Handle Scroll (Home Sections)
+    else if (item.type === "scroll") {
       if (pathname === "/") {
+        // Jika sudah di homepage, lakukan scroll halus biasa
         scrollToId(item.id);
       } else {
-        router.push(`/#${item.id}`);
+        // Jika berada di halaman lain (misal: /about), 
+        // paksa hard load ke homepage dengan anchor ID
+        window.location.href = `/#${item.id}`;
       }
     }
 
-    // UX Logic: Close mobile menu immediately upon selection
+    // Tutup menu mobile
     setIsMobileOpen(false);
   };
   // -------------------------------------
