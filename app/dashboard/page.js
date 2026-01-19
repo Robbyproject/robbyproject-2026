@@ -6,9 +6,9 @@ import {
   GitCommit, Clock, ArrowUpRight, Activity
 } from "lucide-react";
 import { motion } from "framer-motion";
-import dynamic from "next/dynamic"; // 1. Import dynamic
+import dynamic from "next/dynamic";
 
-// 2. Import Wrapper dengan SSR: false (Solusi anti-stuck loading)
+// Import Wrapper dengan SSR: false agar loading tidak stuck
 const CalendarWrapper = dynamic(() => import("@/components/CalendarWrapper"), {
   ssr: false,
   loading: () => <div className="h-[150px] w-full bg-zinc-900/50 animate-pulse rounded-xl" />,
@@ -36,8 +36,9 @@ export default function DashboardPage() {
     let isMounted = true;
     const fetchTraffic = async () => {
       try {
+        // 👇 PERUBAHAN DI SINI: Menggunakan nama tabel baru 'app_visits'
         const { data, error } = await supabase
-          .from('traffic_logs')
+          .from('app_visits')
           .select('id, device_type, page_path, created_at')
           .order('created_at', { ascending: false });
 
@@ -48,10 +49,12 @@ export default function DashboardPage() {
       } catch (err) {
         console.error("Error fetching traffic:", err);
       } finally {
-        if (isMounted) setLoading(false); // Hapus timeout agar lebih responsif
+        if (isMounted) setLoading(false);
       }
     };
+
     fetchTraffic();
+
     return () => { isMounted = false; };
   }, []);
 
@@ -201,7 +204,7 @@ export default function DashboardPage() {
           </div>
         </BentoCard>
 
-        {/* 6. GITHUB CONTRIBUTIONS - BERSIH! */}
+        {/* 6. GITHUB CONTRIBUTIONS */}
         <BentoCard className="col-span-1 md:col-span-3 lg:col-span-4 overflow-hidden min-h-[200px]">
           <div className="flex items-center gap-2 mb-4 text-zinc-500 dark:text-zinc-400">
             <GitCommit size={18} />
@@ -210,7 +213,6 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          {/* Komponen Kalender dipanggil bersih di sini */}
           <CalendarWrapper username={GITHUB_USERNAME} />
 
         </BentoCard>
@@ -220,7 +222,7 @@ export default function DashboardPage() {
   );
 }
 
-// --- UTILS COMPONENTS TETAP SAMA ---
+// --- UTILS COMPONENTS ---
 function BentoCard({ children, className }) {
   return (
     <motion.div
