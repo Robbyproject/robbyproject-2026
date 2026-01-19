@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
 import { useLanguage } from "@/components/providers/AppProviders";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -31,8 +31,39 @@ export default function AnimePage() {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef(null);
 
+    // 1. FETCH DATA (Optimized with isMounted)
     useEffect(() => {
+        let isMounted = true;
+
+        const fetchAnime = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('anime_list')
+                    .select('*')
+                    .order('id', { ascending: false });
+
+                if (isMounted) {
+                    if (error) throw error;
+                    setAnimeList(data || []);
+                    setLoading(false);
+                }
+            } catch (error) {
+                console.error("Error fetching anime:", error);
+                if (isMounted) setLoading(false);
+            }
+        };
+
         fetchAnime();
+
+        return () => { isMounted = false; };
+    }, []);
+
+    // 2. OPTIMIZED EVENT HANDLERS
+    const toggleFilter = useCallback(() => setIsFilterOpen(prev => !prev), []);
+
+    const selectStatus = useCallback((status) => {
+        setSelectedStatus(status);
+        setIsFilterOpen(false);
     }, []);
 
     // Logic Click Outside Dropdown
@@ -42,40 +73,37 @@ export default function AnimePage() {
                 setIsFilterOpen(false);
             }
         }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [filterRef]);
-
-    const fetchAnime = async () => {
-        try {
-            setLoading(true);
-            const { data, error } = await supabase
-                .from('anime_list')
-                .select('*')
-                .order('id', { ascending: false });
-
-            if (error) throw error;
-            setAnimeList(data || []);
-        } catch (error) {
-            console.error("Error fetching anime:", error);
-        } finally {
-            setLoading(false);
+        if (isFilterOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
         }
-    };
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isFilterOpen]);
 
-    // --- LOGIC: AMBIL STATUS UNIK ---
+    // 3. MEMOIZED STATUSES
     const statuses = useMemo(() => {
         const uniqueStatus = new Set(animeList.map(item => item.status).filter(Boolean));
         return ["All", ...Array.from(uniqueStatus).sort()];
     }, [animeList]);
 
-    // --- LOGIC: FILTER ITEM ---
+    // 4. MEMOIZED FILTER LOGIC (With Fast Path)
     const filteredAnime = useMemo(() => {
-        return animeList.filter((item) => {
-            const matchesSearch = item.title?.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesStatus = selectedStatus === "All" || item.status === selectedStatus;
+        // Jika data belum ada
+        if (!animeList.length) return [];
 
-            return matchesSearch && matchesStatus;
+        const query = searchQuery.toLowerCase().trim();
+        const isAllStatus = selectedStatus === "All";
+
+        // Fast Path: Jika tidak ada search & status All, return semua (hemat resource)
+        if (!query && isAllStatus) return animeList;
+
+        return animeList.filter((item) => {
+            // Cek Status dulu (lebih cepat)
+            const matchesStatus = isAllStatus || item.status === selectedStatus;
+            if (!matchesStatus) return false;
+
+            // Jika status cocok, baru cek search query
+            if (!query) return true;
+            return item.title?.toLowerCase().includes(query);
         });
     }, [animeList, searchQuery, selectedStatus]);
 
@@ -114,7 +142,7 @@ export default function AnimePage() {
                     {/* 2. Dropdown Filter Button */}
                     <div className="relative shrink-0" ref={filterRef}>
                         <button
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            onClick={toggleFilter}
                             className={`flex items-center justify-between gap-2 h-10 px-3 md:px-4 rounded-xl border text-sm font-medium transition-all w-auto
                         ${isFilterOpen || selectedStatus !== "All"
                                     ? "bg-white dark:bg-zinc-800 border-cyan-500/50 text-cyan-600 dark:text-cyan-400 shadow-sm"
@@ -136,29 +164,28 @@ export default function AnimePage() {
                                     initial={{ opacity: 0, y: 8, scale: 0.95 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                                    transition={{ duration: 0.2, ease: "easeOut" }}
+                                    transition={{ duration: 0.15 }}
                                     className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#151515] border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden z-50 p-1"
                                 >
-                                    <div className="px-2 py-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-                                        Watch Status
+                                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                                        <div className="px-2 py-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                                            Watch Status
+                                        </div>
+                                        {statuses.map((status) => (
+                                            <button
+                                                key={status}
+                                                onClick={() => selectStatus(status)}
+                                                className={`w-full flex items-center justify-between px-2 py-2 text-sm rounded-lg transition-colors text-left
+                                                ${selectedStatus === status
+                                                        ? "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 font-medium"
+                                                        : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                                    }`}
+                                            >
+                                                {status}
+                                                {selectedStatus === status && <Check size={14} />}
+                                            </button>
+                                        ))}
                                     </div>
-                                    {statuses.map((status) => (
-                                        <button
-                                            key={status}
-                                            onClick={() => {
-                                                setSelectedStatus(status);
-                                                setIsFilterOpen(false);
-                                            }}
-                                            className={`w-full flex items-center justify-between px-2 py-2 text-sm rounded-lg transition-colors text-left
-                                            ${selectedStatus === status
-                                                    ? "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 font-medium"
-                                                    : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                                                }`}
-                                        >
-                                            {status}
-                                            {selectedStatus === status && <Check size={14} />}
-                                        </button>
-                                    ))}
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -196,11 +223,10 @@ export default function AnimePage() {
                 // REAL CONTENT
                 <div className="columns-2 md:columns-4 lg:columns-5 gap-4 space-y-4">
                     <AnimatePresence mode="popLayout">
-                        {filteredAnime.map((anime, index) => (
+                        {filteredAnime.map((anime) => (
                             <AnimeCard
                                 key={anime.id}
                                 anime={anime}
-                                index={index}
                             />
                         ))}
                     </AnimatePresence>
@@ -211,9 +237,10 @@ export default function AnimePage() {
     );
 }
 
-// --- CARD COMPONENT (OPTIMIZED: Smooth Spring Animation) ---
-function AnimeCard({ anime, index }) {
-    // Helper untuk warna status
+// --- OPTIMIZED CARD COMPONENT (Wrapped in Memo) ---
+const AnimeCard = memo(function AnimeCard({ anime }) {
+
+    // Helper untuk warna status (Static logic, aman di dalam render)
     const getStatusColor = (status) => {
         const s = status?.toLowerCase() || "";
         if (s === 'watching') return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
@@ -242,18 +269,16 @@ function AnimeCard({ anime, index }) {
             <motion.a
                 href={anime.link_url || "#"}
                 target={anime.link_url ? "_blank" : "_self"}
-                rel="noopener noreferrer"
-                // Perubahan: Gunakan Framer Motion untuk hover, hapus transition CSS manual
+                rel={anime.link_url ? "noopener noreferrer" : ""}
+                // Prevent click if no link
+                onClick={(e) => !anime.link_url && e.preventDefault()}
+
                 className={`block relative rounded-xl overflow-hidden bg-zinc-900 group
                 ${!anime.link_url ? 'cursor-default' : 'cursor-pointer'}`}
 
                 // Animasi Hover (Spring Physics)
                 whileHover={anime.link_url ? { y: -5, scale: 1.02 } : {}}
-                transition={{
-                    type: "spring",
-                    stiffness: 400, // Kekakuan pegas (semakin tinggi semakin cepat balik)
-                    damping: 25 // Peredam (semakin tinggi semakin sedikit getarannya)
-                }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
             >
                 {/* IMAGE AREA */}
                 <div className="relative w-full">
@@ -261,9 +286,10 @@ function AnimeCard({ anime, index }) {
                         <Image
                             src={anime.cover_url}
                             alt={anime.title}
-                            width={0}
-                            height={0}
-                            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
+                            width={300} // Base width, overridden by CSS/Sizes
+                            height={450}
+                            // OPTIMASI: Penting untuk kolom responsif
+                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
                             className="w-full h-auto object-cover min-h-[150px] transform-gpu"
                         />
                     ) : (
@@ -314,4 +340,4 @@ function AnimeCard({ anime, index }) {
             </motion.a>
         </motion.div>
     );
-}
+});

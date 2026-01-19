@@ -1,15 +1,18 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useLanguage } from "@/components/providers/AppProviders";
+import { motion, AnimatePresence } from "framer-motion"; // Import Framer untuk animasi logic yang lebih baik
 import {
   Home, User, Briefcase, Trophy, Mail, Sun, Moon, Menu,
   Clapperboard, Heart, Zap, LayoutDashboard, ChevronDown, Gamepad2,
   ShoppingBag, X, LogOut
 } from "lucide-react";
 import { scrollToId } from "@/utils/helpers";
+
+const PROFILE_IMG = "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa1.webp";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -18,7 +21,6 @@ export default function Sidebar() {
   const { lang, toggleLang, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-
   const [openDropdown, setOpenDropdown] = useState(null);
 
   useEffect(() => {
@@ -30,14 +32,15 @@ export default function Sidebar() {
     setIsMobileOpen(false);
   }, [pathname]);
 
-  // Auto open dropdown jika berada di halaman anak
+  // Logic: Auto expand dropdown parent jika kita berada di child route
   useEffect(() => {
-    if (pathname === "/anime" || pathname === "/waifu") {
+    if (pathname.startsWith("/anime") || pathname.startsWith("/waifu")) {
       setOpenDropdown("Entertainment");
     }
   }, [pathname]);
 
-  const navItems = [
+  // Memoize navItems agar tidak re-calc setiap render
+  const navItems = useMemo(() => [
     { name: t.nav_home, id: "hero", icon: Home, type: "scroll" },
     { name: t.nav_about, path: "/about", icon: User, type: "page" },
     { name: t.nav_services, path: "/services", icon: Zap, type: "page" },
@@ -56,9 +59,14 @@ export default function Sidebar() {
     },
     { name: t.nav_dashboard, path: "/dashboard", icon: LayoutDashboard, type: "page" },
     { name: t.nav_contact, path: "/contact", icon: Mail, type: "page" },
-  ];
+  ], [t]);
 
   const handleNavigation = (item) => {
+    if (item.type === "dropdown") {
+      setOpenDropdown(openDropdown === item.id ? null : item.id);
+      return;
+    }
+
     if (item.type === "page") {
       router.push(item.path);
     } else if (item.type === "scroll") {
@@ -67,12 +75,10 @@ export default function Sidebar() {
       } else {
         router.push(`/#${item.id}`);
       }
-    } else if (item.type === "dropdown") {
-      setOpenDropdown(openDropdown === item.id ? null : item.id);
-      return;
     }
-    // Jangan tutup mobile menu langsung jika klik dropdown, user mungkin mau klik anaknya
-    if (item.type !== "dropdown") setIsMobileOpen(false);
+
+    // UX Logic: Close mobile menu immediately upon selection
+    setIsMobileOpen(false);
   };
 
   if (!mounted) return null;
@@ -80,15 +86,18 @@ export default function Sidebar() {
   return (
     <>
       {/* --- MOBILE HEADER / TOGGLE --- */}
-      {/* Hanya muncul di layar kecil */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md border-b border-zinc-200 dark:border-white/5">
         <div className="flex items-center gap-3">
           <div className="relative w-8 h-8 rounded-full overflow-hidden bg-zinc-100">
-            <Image src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa1.webp" alt="Profile" fill className="object-cover" />
+            <Image src={PROFILE_IMG} alt="Profile" fill className="object-cover" />
           </div>
           <span className="font-semibold text-sm">Robby Fabian</span>
         </div>
-        <button onClick={() => setIsMobileOpen(true)} className="p-2 text-zinc-600 dark:text-zinc-400">
+        <button
+          onClick={() => setIsMobileOpen(true)}
+          className="p-2 text-zinc-600 dark:text-zinc-400 focus:outline-none"
+          aria-label="Open menu"
+        >
           <Menu size={20} />
         </button>
       </div>
@@ -98,6 +107,7 @@ export default function Sidebar() {
         <div
           onClick={() => setIsMobileOpen(false)}
           className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm lg:hidden animate-in fade-in duration-200"
+          aria-hidden="true"
         />
       )}
 
@@ -112,15 +122,16 @@ export default function Sidebar() {
           flex flex-col
       `}>
 
-        {/* 1. PROFILE HEADER (Minimalist) */}
+        {/* 1. PROFILE HEADER */}
         <div className="p-6 flex flex-col items-center border-b border-zinc-100 dark:border-white/5">
           <div className="relative w-20 h-20 mb-4 rounded-full p-1 border border-zinc-200 dark:border-zinc-800">
             <div className="relative w-full h-full rounded-full overflow-hidden">
               <Image
-                src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa1.webp"
+                src={PROFILE_IMG}
                 alt="Profile"
                 fill
                 className="object-cover hover:scale-110 transition-transform duration-500"
+                priority
               />
             </div>
           </div>
@@ -130,20 +141,20 @@ export default function Sidebar() {
 
           {/* Controls (Theme & Lang) */}
           <div className="flex items-center gap-3 mt-4">
-            {/* Theme Toggle */}
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+              aria-label="Toggle theme"
             >
               {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
             </button>
 
             <div className="w-[1px] h-4 bg-zinc-200 dark:bg-zinc-800"></div>
 
-            {/* Lang Toggle */}
             <button
               onClick={() => toggleLang(lang === 'en' ? 'id' : 'en')}
-              className="text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors"
+              className="text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors focus:outline-none"
+              aria-label="Toggle language"
             >
               {lang === 'en' ? 'EN' : 'ID'}
             </button>
@@ -159,46 +170,58 @@ export default function Sidebar() {
             // --- RENDER DROPDOWN ---
             if (item.type === "dropdown") {
               const isChildActive = item.children.some(child => pathname === child.path);
+
               return (
                 <div key={index} className="flex flex-col">
                   <button
                     onClick={() => handleNavigation(item)}
+                    aria-expanded={isDropdownOpen}
                     className={`
-                                    w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200
-                                    ${(isChildActive || isDropdownOpen)
+                        w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200
+                        ${(isChildActive || isDropdownOpen)
                         ? "text-zinc-900 dark:text-white bg-zinc-100 dark:bg-zinc-900"
                         : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-white/5"
                       }
-                                `}
+                    `}
                   >
                     <div className="flex items-center gap-3">
                       <item.icon size={18} strokeWidth={2} />
                       <span>{item.name}</span>
                     </div>
-                    <ChevronDown size={14} className={`transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`} />
+                    <ChevronDown size={14} className={`transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""}`} />
                   </button>
 
-                  {/* Dropdown Items */}
-                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isDropdownOpen ? "max-h-40 opacity-100 mt-1" : "max-h-0 opacity-0"}`}>
-                    <div className="flex flex-col gap-1 pl-4 ml-4 border-l border-zinc-200 dark:border-zinc-800">
-                      {item.children.map((subItem) => (
-                        <button
-                          key={subItem.path}
-                          onClick={() => handleNavigation(subItem)}
-                          className={`
-                                                w-full flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-md transition-all
-                                                ${pathname === subItem.path
-                              ? "text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-900/10"
-                              : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                            }
-                                            `}
-                        >
-                          <subItem.icon size={14} />
-                          {subItem.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  {/* UX LOGIC: Ganti CSS Class animation dengan Framer Motion AnimatePresence agar height auto & smooth */}
+                  <AnimatePresence initial={false}>
+                    {isDropdownOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }} // Spring-like ease
+                        className="overflow-hidden"
+                      >
+                        <div className="flex flex-col gap-1 pl-4 ml-4 border-l border-zinc-200 dark:border-zinc-800 mt-1 pb-1">
+                          {item.children.map((subItem) => (
+                            <button
+                              key={subItem.path}
+                              onClick={() => handleNavigation(subItem)}
+                              className={`
+                                  w-full flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-md transition-all
+                                  ${pathname === subItem.path
+                                  ? "text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-900/10"
+                                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                                }
+                              `}
+                            >
+                              <subItem.icon size={14} />
+                              {subItem.name}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               );
             }
@@ -209,12 +232,12 @@ export default function Sidebar() {
                 key={index}
                 onClick={() => handleNavigation(item)}
                 className={`
-                            group w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 relative
-                            ${isActive
+                    group w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 relative
+                    ${isActive
                     ? "text-zinc-900 dark:text-white bg-zinc-100 dark:bg-zinc-900"
                     : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-white/5"
                   }
-                        `}
+                `}
               >
                 {/* Active Indicator (Small Dot) */}
                 {isActive && <div className="absolute left-0 w-1 h-5 bg-cyan-500 rounded-r-full" />}
@@ -235,7 +258,7 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* --- CSS UTILS (Optional if configured in global css) --- */}
+      {/* --- CSS UTILS --- */}
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }

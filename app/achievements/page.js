@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, useMemo, useRef } from "react";
+
+import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
 import { useLanguage } from "@/components/providers/AppProviders";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,7 +15,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import Link from "next/link"; // Pastikan import Link jika pakai next/link
 
 export default function AchievementsPage() {
     const { t } = useLanguage();
@@ -25,56 +25,90 @@ export default function AchievementsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All");
 
-    // State untuk Dropdown (Sama seperti Projects)
+    // State untuk Dropdown
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef(null);
 
+    // 1. FETCH DATA (Optimized with isMounted check)
     useEffect(() => {
+        let isMounted = true;
+
         const fetchData = async () => {
-            setLoading(true);
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('achievements')
                 .select('*')
                 .order('id', { ascending: false });
 
-            if (data) setAchievements(data);
-            setLoading(false);
+            if (isMounted) {
+                if (data) setAchievements(data);
+                if (error) console.error("Error loading achievements:", error);
+                setLoading(false);
+            }
         };
+
         fetchData();
+
+        return () => { isMounted = false; };
     }, []);
 
-    // Logic Click Outside untuk Dropdown
+    // 2. OPTIMIZED EVENT HANDLERS (useCallback)
+    const toggleFilter = useCallback(() => setIsFilterOpen(prev => !prev), []);
+
+    const selectCategory = useCallback((cat) => {
+        setSelectedCategory(cat);
+        setIsFilterOpen(false);
+    }, []);
+
+    // Logic Click Outside
     useEffect(() => {
         function handleClickOutside(event) {
             if (filterRef.current && !filterRef.current.contains(event.target)) {
                 setIsFilterOpen(false);
             }
         }
-        document.addEventListener("mousedown", handleClickOutside);
+        if (isFilterOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [filterRef]);
+    }, [isFilterOpen]);
 
-    // --- LOGIC: EXTRACT CATEGORIES ---
+    // 3. MEMOIZED CATEGORIES
     const categories = useMemo(() => {
-        // Ambil kategori unik, lalu urutkan abjad
-        const uniqueCats = new Set(achievements.map(item => item.category || item.issuer).filter(Boolean));
+        const uniqueCats = new Set(achievements.map(item => item.issuer || item.category).filter(Boolean));
         const sortedCats = Array.from(uniqueCats).sort();
         return ["All", ...sortedCats];
     }, [achievements]);
 
-    // --- LOGIC: FILTER ITEMS ---
+    // 4. MEMOIZED FILTERING LOGIC (With Fast Path)
     const filteredAchievements = useMemo(() => {
+        // Jika data belum ada
+        if (!achievements.length) return [];
+
+        const query = searchQuery.toLowerCase().trim();
+        const isAllCats = selectedCategory === "All";
+
+        // Fast Path: Jika tidak ada filter search & kategori All, kembalikan semua
+        if (!query && isAllCats) return achievements;
+
         return achievements.filter((item) => {
-            const matchesSearch =
-                item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.issuer?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+            // Prioritas: Issuer sering digunakan sebagai kategori di achievement
+            const currentItemCategory = item.issuer || item.category;
+            const matchesCategory = isAllCats || currentItemCategory === selectedCategory;
 
-            const currentItemCategory = item.category || item.issuer;
-            const matchesCategory =
-                selectedCategory === "All" || currentItemCategory === selectedCategory;
+            // Short-circuit: Jika kategori salah, stop pengecekan text (hemat resource)
+            if (!matchesCategory) return false;
 
-            return matchesSearch && matchesCategory;
+            if (!query) return true;
+
+            // Pengecekan text
+            const title = item.title?.toLowerCase() || "";
+            if (title.includes(query)) return true;
+
+            const issuer = item.issuer?.toLowerCase() || "";
+            if (issuer.includes(query)) return true;
+
+            const desc = item.description?.toLowerCase() || "";
+            return desc.includes(query);
         });
     }, [achievements, searchQuery, selectedCategory]);
 
@@ -96,10 +130,9 @@ export default function AchievementsPage() {
                 </div>
 
                 {/* --- CONTROLS (SEARCH & FILTER) --- */}
-                {/* Menggunakan layout 'flex-row' agar sejajar di Mobile */}
                 <div className="flex flex-row items-center gap-2 w-full lg:w-auto relative z-20">
 
-                    {/* 1. Search Bar (flex-1 agar mengisi ruang sisa) */}
+                    {/* Search Bar */}
                     <div className="relative flex-1 group">
                         <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                             <Search size={14} className="text-zinc-400 group-focus-within:text-yellow-500 transition-colors" />
@@ -113,10 +146,10 @@ export default function AchievementsPage() {
                         />
                     </div>
 
-                    {/* 2. Dropdown Filter (Menggantikan Tabs lama) */}
+                    {/* Dropdown Filter */}
                     <div className="relative shrink-0" ref={filterRef}>
                         <button
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            onClick={toggleFilter}
                             className={`flex items-center justify-between gap-2 h-10 px-3 md:px-4 rounded-xl border text-sm font-medium transition-all w-auto
                             ${isFilterOpen || selectedCategory !== "All"
                                     ? "bg-white dark:bg-zinc-800 border-yellow-500/50 text-yellow-600 dark:text-yellow-400 shadow-sm"
@@ -125,7 +158,6 @@ export default function AchievementsPage() {
                         >
                             <div className="flex items-center gap-2">
                                 <ListFilter size={16} />
-                                {/* Teks 'Filter' sembunyi di HP kecil, muncul di HP normal/Desktop */}
                                 <span className="hidden xs:inline truncate max-w-[80px] md:max-w-none">
                                     {selectedCategory === "All" ? "Filter" : selectedCategory}
                                 </span>
@@ -139,7 +171,7 @@ export default function AchievementsPage() {
                                     initial={{ opacity: 0, y: 8, scale: 0.95 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                                    transition={{ duration: 0.2, ease: "easeOut" }}
+                                    transition={{ duration: 0.15 }}
                                     className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#151515] border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden z-50 p-1"
                                 >
                                     <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
@@ -149,10 +181,7 @@ export default function AchievementsPage() {
                                         {categories.map((cat) => (
                                             <button
                                                 key={cat}
-                                                onClick={() => {
-                                                    setSelectedCategory(cat);
-                                                    setIsFilterOpen(false);
-                                                }}
+                                                onClick={() => selectCategory(cat)}
                                                 className={`w-full flex items-center justify-between px-2 py-2 text-sm rounded-lg transition-colors text-left
                                                 ${selectedCategory === cat
                                                         ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 font-medium"
@@ -174,7 +203,6 @@ export default function AchievementsPage() {
 
             {/* --- MAIN CONTENT GRID --- */}
             {loading ? (
-                // SKELETON LOADING: columns-1 (HP) -> sm:columns-2 -> md:columns-3
                 <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
                     {[...Array(6)].map((_, i) => (
                         <div key={i} className="break-inside-avoid mb-4">
@@ -187,7 +215,6 @@ export default function AchievementsPage() {
                     ))}
                 </div>
             ) : filteredAchievements.length === 0 ? (
-                // EMPTY STATE
                 <div className="flex flex-col items-center justify-center py-20 text-center bg-zinc-50/50 dark:bg-zinc-900/20 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800">
                     <div className="w-12 h-12 bg-zinc-100 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-3 text-zinc-400">
                         <Search size={20} />
@@ -201,14 +228,12 @@ export default function AchievementsPage() {
                     </button>
                 </div>
             ) : (
-                // REAL CONTENT GRID: columns-1 (HP) -> sm:columns-2 -> md:columns-3 -> lg:columns-4
                 <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
                     <AnimatePresence mode="popLayout">
-                        {filteredAchievements.map((item, index) => (
+                        {filteredAchievements.map((item) => (
                             <AchievementCard
                                 key={item.id}
                                 item={item}
-                                index={index}
                             />
                         ))}
                     </AnimatePresence>
@@ -219,8 +244,9 @@ export default function AchievementsPage() {
     );
 }
 
-// --- CARD COMPONENT (Sedikit penyesuaian margin agar pas dengan kolom baru) ---
-function AchievementCard({ item, index }) {
+// --- OPTIMIZED CARD COMPONENT (Wrapped in Memo) ---
+const AchievementCard = memo(function AchievementCard({ item }) {
+    // Determine image placeholder if needed or use blurDataURL
     return (
         <motion.div
             layout
@@ -233,20 +259,26 @@ function AchievementCard({ item, index }) {
             <a
                 href={item.link_url || "#"}
                 target={item.link_url ? "_blank" : "_self"}
-                rel="noopener noreferrer"
+                rel={item.link_url ? "noopener noreferrer" : ""}
                 className={`block bg-white dark:bg-[#121212] rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 transition-all duration-300 hover:shadow-xl hover:border-yellow-500/30 
                 ${!item.link_url ? 'cursor-default' : 'cursor-pointer hover:-translate-y-1'}`}
+                // Mencegah navigasi default jika link kosong
+                onClick={(e) => !item.link_url && e.preventDefault()}
             >
                 {/* IMAGE AREA */}
                 <div className="relative w-full bg-zinc-100 dark:bg-black/20 p-4">
                     {item.image_url ? (
-                        <Image
-                            src={item.image_url}
-                            alt={item.title}
-                            width={500}
-                            height={400}
-                            className="w-full h-auto object-contain rounded-lg shadow-sm"
-                        />
+                        <div className="relative w-full h-auto">
+                            <Image
+                                src={item.image_url}
+                                alt={item.title}
+                                width={500}
+                                height={400}
+                                // OPTIMASI: Ukuran responsif untuk performa mobile
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                                className="w-full h-auto object-contain rounded-lg shadow-sm"
+                            />
+                        </div>
                     ) : (
                         <div className="w-full aspect-video flex flex-col items-center justify-center text-zinc-300 dark:text-zinc-700">
                             <Award size={40} strokeWidth={1.5} />
@@ -268,7 +300,7 @@ function AchievementCard({ item, index }) {
                     {/* Issuer Tag */}
                     <div className="flex items-center gap-2 mb-3">
                         <div className="px-2.5 py-1 rounded-md bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-100 dark:border-yellow-500/20 flex items-center gap-1.5">
-                            {item.issuer && <Award size={12} className="text-yellow-600 dark:text-yellow-500" />}
+                            {(item.issuer || item.category) && <Award size={12} className="text-yellow-600 dark:text-yellow-500" />}
                             <span className="text-[10px] font-bold uppercase tracking-wider text-yellow-700 dark:text-yellow-500">
                                 {item.issuer || item.category || "Award"}
                             </span>
@@ -304,4 +336,4 @@ function AchievementCard({ item, index }) {
             </a>
         </motion.div>
     );
-}
+});

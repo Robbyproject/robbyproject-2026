@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image"; // PENTING: Import Image Next.js
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import {
   MapPin, ArrowRight, Laptop, User, Trophy,
@@ -17,6 +17,11 @@ import {
 } from "react-icons/si";
 
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
+
+// --- GLOBAL CACHE VARIABLES (Added for Performance) ---
+// Variable ini ditaruh di luar component agar datanya tidak hilang saat pindah halaman
+let cachedBanner = null;
+let cachedProjects = null;
 
 // --- KOMPONEN BENTO CARD ---
 const BentoCard = ({ children, className, href = "#" }) => {
@@ -34,7 +39,7 @@ const BentoCard = ({ children, className, href = "#" }) => {
       whileHover={{ y: -5 }}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }} // Optimasi viewport agar animasi tidak berat
+      viewport={{ once: true, margin: "-50px" }}
       onMouseMove={handleMouseMove}
       className={`group relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#111] p-8 hover:bg-[#161616] transition-all duration-500 ${className}`}
     >
@@ -84,7 +89,7 @@ const containerVariants = {
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, filter: "blur(5px)", y: 20 }, // Blur dikurangi dari 15 ke 5 agar GPU lebih ringan
+  hidden: { opacity: 0, filter: "blur(5px)", y: 20 },
   visible: { opacity: 1, filter: "blur(0px)", y: 0, transition: { duration: 0.6, ease: "easeOut" } }
 };
 
@@ -100,15 +105,25 @@ const mySkills = [
   { name: "Github", icon: SiGithub, color: "#ffffff" },
 ];
 
-// --- UPDATED DESCRIPTION HERE ---
 const heroDescription = `I am a Graphic Designer and Front-End Developer skilled in creating visually appealing, clean, and functional digital interfaces. I work with Next.js, TypeScript, and Tailwind CSS to build responsive user experiences, combining creative design with technical precision. As a detail-oriented and collaborative individual, I am committed to delivering high-quality, modern, and user-friendly results.`;
 
 export default function Home() {
-  const [featuredContent, setFeaturedContent] = useState(null);
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // LOGIKA CACHING:
+  // 1. Cek apakah di variabel global (cachedBanner) sudah ada datanya?
+  // Jika ada, pakai itu. Jika tidak, baru null.
+  const [featuredContent, setFeaturedContent] = useState(cachedBanner);
+  const [projects, setProjects] = useState(cachedProjects || []);
+
+  // 2. Loading hanya true jika data BELUM ada di cache
+  const [loading, setLoading] = useState(!cachedBanner);
 
   useEffect(() => {
+    // 3. Jika data sudah ada di cache, stop di sini. Tidak perlu fetch ulang.
+    if (cachedBanner && cachedProjects && cachedProjects.length > 0) {
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -122,16 +137,22 @@ export default function Home() {
           .limit(1)
           .single();
 
-        if (bannerData) setFeaturedContent(bannerData);
+        if (bannerData) {
+          setFeaturedContent(bannerData);
+          cachedBanner = bannerData; // Simpan ke global variable
+        }
 
-        // Fetch Projects (Select hanya field yang dipakai agar ringan)
+        // Fetch Projects
         const { data: projectData } = await supabase
           .from("projects")
           .select("id, title, image_url")
           .order("id", { ascending: false })
           .limit(4);
 
-        if (projectData) setProjects(projectData);
+        if (projectData) {
+          setProjects(projectData);
+          cachedProjects = projectData; // Simpan ke global variable
+        }
 
       } catch (error) {
         console.error("Error loading data:", error.message);
@@ -214,14 +235,13 @@ export default function Home() {
           ) : featuredContent && (
             <Link href="/contact" className="block group relative w-full h-[380px] md:h-[420px] rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-zinc-900">
 
-              {/* --- PERBAIKAN UTAMA: MENGGUNAKAN NEXT/IMAGE --- */}
               <Image
                 src={featuredContent.image_url}
                 alt={featuredContent.title || "Featured Banner"}
-                fill // Mengisi parent container
-                priority={true} // LCP BOOSTER: Wajib true agar didownload duluan
+                fill
+                priority={true}
                 quality={85}
-                sizes="(max-width: 768px) 100vw, 100vw" // Responsive sizes
+                sizes="(max-width: 768px) 100vw, 100vw"
                 className="object-cover opacity-60 transition-transform duration-700 group-hover:scale-105 group-hover:opacity-80"
               />
 
@@ -282,7 +302,6 @@ export default function Home() {
                             alt={proj.title}
                             fill
                             className="object-cover"
-                            // Sizes: Pada Mobile 50% layar, Desktop 25% layar
                             sizes="(max-width: 768px) 50vw, 25vw"
                           />
                         ) : (
@@ -308,19 +327,17 @@ export default function Home() {
               <h3 className="text-lg font-bold text-white mb-1">About Me</h3>
               <p className="text-sm text-zinc-500">The person behind the code.</p>
 
-              {/* --- PERBAIKAN: GANTI IMG DENGAN NEXT/IMAGE --- */}
               <div className="mt-8 relative flex-1 w-full h-full rounded-2xl overflow-hidden border border-white/10 grayscale group-hover:grayscale-0 transition-all duration-500">
                 <Image
                   src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa1.webp"
                   alt="Robby Fabian"
                   fill
                   className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 400px" // Cukup load ukuran kecil
+                  sizes="(max-width: 768px) 100vw, 400px"
                 />
               </div>
             </BentoCard>
 
-            {/* ... SISA COMPONENT SAMA ... */}
             <BentoCard href="/store">
               <ShoppingBag size={20} className="text-zinc-400 mb-4" />
               <h3 className="font-bold text-white text-sm">Digital Store</h3>

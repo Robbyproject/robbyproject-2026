@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, useMemo, useRef } from "react";
+
+import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
 import { useLanguage } from "@/components/providers/AppProviders";
 import {
     Heart,
@@ -27,49 +28,81 @@ export default function WaifuPage() {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef(null);
 
+    // 1. FETCH DATA (Safe for unmount)
     useEffect(() => {
+        let isMounted = true;
+
+        const fetchWaifu = async () => {
+            try {
+                // setLoading(true) dipindah ke inisialisasi state agar tidak flicker
+                const { data, error } = await supabase
+                    .from('waifu_list')
+                    .select('*')
+                    .order('name', { ascending: true });
+
+                if (isMounted) {
+                    if (error) throw error;
+                    setWaifuList(data || []);
+                }
+            } catch (err) {
+                console.error("Error fetching waifus:", err);
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        };
+
         fetchWaifu();
+
+        return () => { isMounted = false; };
     }, []);
 
-    // Logic Click Outside Dropdown
+    // 2. EVENT HANDLERS (Memoized)
+    const toggleFilter = useCallback(() => setIsFilterOpen(prev => !prev), []);
+
+    const selectSource = useCallback((source) => {
+        setSelectedSource(source);
+        setIsFilterOpen(false);
+    }, []);
+
+    // Logic Click Outside
     useEffect(() => {
         function handleClickOutside(event) {
             if (filterRef.current && !filterRef.current.contains(event.target)) {
                 setIsFilterOpen(false);
             }
         }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [filterRef]);
-
-    const fetchWaifu = async () => {
-        setLoading(true);
-        try {
-            const { data } = await supabase
-                .from('waifu_list')
-                .select('*')
-                .order('name', { ascending: true });
-
-            if (data) setWaifuList(data);
-        } catch (err) {
-            console.error("Error fetching waifus:", err);
-        } finally {
-            setLoading(false);
+        if (isFilterOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
         }
-    };
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isFilterOpen]);
 
-    // --- LOGIC: AMBIL SOURCE UNIK ---
+
+    // 3. LOGIC: AMBIL SOURCE UNIK (Memoized)
     const sources = useMemo(() => {
         const uniqueSources = new Set(waifuList.map(item => item.anime_source).filter(Boolean));
         return ["All", ...Array.from(uniqueSources).sort()];
     }, [waifuList]);
 
-    // --- LOGIC: FILTER ITEM ---
+    // 4. LOGIC: FILTER ITEM (Fast Path Optimized)
     const filteredWaifu = useMemo(() => {
+        // Jika data kosong
+        if (!waifuList.length) return [];
+
+        const query = searchQuery.toLowerCase().trim();
+        const isAllSource = selectedSource === "All";
+
+        // Fast Path: Jika tidak ada filter aktif, return semua
+        if (!query && isAllSource) return waifuList;
+
         return waifuList.filter((item) => {
-            const matchesSearch = item.name?.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesSource = selectedSource === "All" || item.anime_source === selectedSource;
-            return matchesSearch && matchesSource;
+            // Cek Source dulu (lebih murah operasinya)
+            const matchesSource = isAllSource || item.anime_source === selectedSource;
+            if (!matchesSource) return false;
+
+            // Baru cek search query
+            if (!query) return true;
+            return item.name?.toLowerCase().includes(query);
         });
     }, [waifuList, searchQuery, selectedSource]);
 
@@ -108,7 +141,7 @@ export default function WaifuPage() {
                     {/* 2. Dropdown Filter Button */}
                     <div className="relative shrink-0" ref={filterRef}>
                         <button
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            onClick={toggleFilter}
                             className={`flex items-center justify-between gap-2 h-10 px-3 md:px-4 rounded-xl border text-sm font-medium transition-all w-auto
                         ${isFilterOpen || selectedSource !== "All"
                                     ? "bg-white dark:bg-zinc-800 border-rose-500/50 text-rose-600 dark:text-rose-400 shadow-sm"
@@ -130,7 +163,7 @@ export default function WaifuPage() {
                                     initial={{ opacity: 0, y: 8, scale: 0.95 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                                    transition={{ duration: 0.2, ease: "easeOut" }}
+                                    transition={{ duration: 0.15, ease: "easeOut" }}
                                     className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#151515] border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden z-50 p-1"
                                 >
                                     <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
@@ -140,12 +173,9 @@ export default function WaifuPage() {
                                         {sources.map((source) => (
                                             <button
                                                 key={source}
-                                                onClick={() => {
-                                                    setSelectedSource(source);
-                                                    setIsFilterOpen(false);
-                                                }}
+                                                onClick={() => selectSource(source)}
                                                 className={`w-full flex items-center justify-between px-2 py-2 text-sm rounded-lg transition-colors text-left
-                                            ${selectedSource === source
+                                                ${selectedSource === source
                                                         ? "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 font-medium"
                                                         : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                                                     }`}
@@ -188,8 +218,8 @@ export default function WaifuPage() {
                 // REAL CONTENT
                 <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
                     <AnimatePresence mode="popLayout">
-                        {filteredWaifu.map((char, index) => (
-                            <WaifuCard key={char.id} char={char} index={index} />
+                        {filteredWaifu.map((char) => (
+                            <WaifuCard key={char.id} char={char} />
                         ))}
                     </AnimatePresence>
                 </div>
@@ -198,10 +228,10 @@ export default function WaifuPage() {
     );
 }
 
-// --- COMPONENT: CARD ---
-function WaifuCard({ char, index }) {
-    // Cek apakah file adalah video
-    const isVideo = char.image_url?.match(/\.(mp4|webm|ogg|mov)$/i);
+// --- OPTIMIZED COMPONENT: CARD (Wrapped in Memo) ---
+const WaifuCard = memo(function WaifuCard({ char }) {
+    // Cek apakah file adalah video (Regex sederhana & efisien)
+    const isVideo = useMemo(() => char.image_url?.match(/\.(mp4|webm|ogg|mov)$/i), [char.image_url]);
 
     return (
         <motion.div
@@ -209,7 +239,7 @@ function WaifuCard({ char, index }) {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.4, ease: "backOut" }}
             className="break-inside-avoid mb-4 group relative"
         >
             <div className="relative rounded-2xl overflow-hidden bg-zinc-900 shadow-sm border border-zinc-200 dark:border-white/5 hover:shadow-2xl hover:shadow-rose-500/10 transition-all duration-500 hover:-translate-y-1">
@@ -219,16 +249,21 @@ function WaifuCard({ char, index }) {
                     {isVideo ? (
                         <video
                             src={char.image_url}
-                            autoPlay muted loop playsInline
+                            autoPlay
+                            muted
+                            loop
+                            playsInline // Penting untuk iOS agar tidak fullscreen
+                            preload="metadata"
                             className="w-full h-auto object-cover"
                         />
                     ) : (
                         <Image
                             src={char.image_url}
                             alt={char.name}
-                            width={0}
-                            height={0}
-                            sizes="(max-width: 768px) 50vw, 33vw"
+                            width={500} // Base size untuk layout responsif
+                            height={700}
+                            // OPTIMASI: Ukuran kolom Masonry tidak pernah 100vw di desktop
+                            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                             className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                     )}
@@ -263,7 +298,7 @@ function WaifuCard({ char, index }) {
 
                     {/* Video Indicator */}
                     {isVideo && (
-                        <div className="absolute bottom-4 right-4 text-rose-400 opacity-80">
+                        <div className="absolute bottom-4 right-4 text-rose-400 opacity-80 animate-pulse">
                             <PlayCircle size={20} />
                         </div>
                     )}
@@ -271,4 +306,4 @@ function WaifuCard({ char, index }) {
             </div>
         </motion.div>
     );
-}
+});

@@ -1,4 +1,6 @@
 "use client";
+
+import { useMemo } from "react";
 import { useLanguage } from "@/components/providers/AppProviders";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -7,42 +9,48 @@ import { Palette, Code, LayoutTemplate, ArrowRight, CheckCircle2 } from "lucide-
 export default function ServicesPage() {
     const { t } = useLanguage();
 
-    const services = [
-        {
-            id: "graphic",
-            title: t.serv_graphic_title || "Graphic Design",
-            desc: t.serv_graphic_desc || "Visual storytelling through compelling imagery and brand identity.",
-            list: t.serv_graphic_list ? t.serv_graphic_list.split(", ") : ["Logo Design", "Brand Identity", "Social Media"],
-            icon: Palette,
-            // Define colors explicitly for Tailwind JIT
-            color: "text-pink-500",
-            bg: "bg-pink-500/10 dark:bg-pink-500/20",
-            border: "group-hover:border-pink-500/50",
-            gradient: "via-pink-500"
-        },
-        {
-            id: "web",
-            title: t.serv_web_title || "Web Development",
-            desc: t.serv_web_desc || "Building fast, responsive, and scalable web applications.",
-            list: t.serv_web_list ? t.serv_web_list.split(", ") : ["Frontend Dev", "React/Next.js", "Performance"],
-            icon: Code,
-            color: "text-cyan-500",
-            bg: "bg-cyan-500/10 dark:bg-cyan-500/20",
-            border: "group-hover:border-cyan-500/50",
-            gradient: "via-cyan-500"
-        },
-        {
-            id: "uiux",
-            title: t.serv_uiux_title || "UI/UX Design",
-            desc: t.serv_uiux_desc || "User-centric interfaces that are intuitive and engaging.",
-            list: t.serv_uiux_list ? t.serv_uiux_list.split(", ") : ["Prototyping", "User Research", "Wireframing"],
-            icon: LayoutTemplate,
-            color: "text-orange-500",
-            bg: "bg-orange-500/10 dark:bg-orange-500/20",
-            border: "group-hover:border-orange-500/50",
-            gradient: "via-orange-500"
-        }
-    ];
+    // OPTIMISASI LOGIKA:
+    // Menggunakan useMemo agar array ini tidak dibuat ulang (re-calculate) 
+    // setiap kali komponen di-render ulang oleh React.
+    // Ini mengurangi beban JavaScript di sisi browser.
+    const services = useMemo(() => {
+        return [
+            {
+                id: "graphic",
+                title: t.serv_graphic_title || "Graphic Design",
+                desc: t.serv_graphic_desc || "Visual storytelling through compelling imagery and brand identity.",
+                // Logika split hanya jalan jika data text tersedia
+                list: t.serv_graphic_list ? t.serv_graphic_list.split(", ") : ["Logo Design", "Brand Identity", "Social Media"],
+                icon: Palette,
+                color: "text-pink-500",
+                bg: "bg-pink-500/10 dark:bg-pink-500/20",
+                border: "group-hover:border-pink-500/50",
+                gradient: "via-pink-500"
+            },
+            {
+                id: "web",
+                title: t.serv_web_title || "Web Development",
+                desc: t.serv_web_desc || "Building fast, responsive, and scalable web applications.",
+                list: t.serv_web_list ? t.serv_web_list.split(", ") : ["Frontend Dev", "React/Next.js", "Performance"],
+                icon: Code,
+                color: "text-cyan-500",
+                bg: "bg-cyan-500/10 dark:bg-cyan-500/20",
+                border: "group-hover:border-cyan-500/50",
+                gradient: "via-cyan-500"
+            },
+            {
+                id: "uiux",
+                title: t.serv_uiux_title || "UI/UX Design",
+                desc: t.serv_uiux_desc || "User-centric interfaces that are intuitive and engaging.",
+                list: t.serv_uiux_list ? t.serv_uiux_list.split(", ") : ["Prototyping", "User Research", "Wireframing"],
+                icon: LayoutTemplate,
+                color: "text-orange-500",
+                bg: "bg-orange-500/10 dark:bg-orange-500/20",
+                border: "group-hover:border-orange-500/50",
+                gradient: "via-orange-500"
+            }
+        ];
+    }, [t]); // Data hanya diperbarui jika bahasa (t) berubah
 
     return (
         // 👇 CLEAN ROOT: Full width, spacing diurus parent
@@ -52,7 +60,6 @@ export default function ServicesPage() {
             <div className="border-b border-zinc-200 dark:border-white/5 pb-6 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
                 <div className="space-y-2">
                     <h1 className="text-3xl font-bold text-zinc-900 dark:text-white flex items-center gap-3">
-
                         {t.services_title || "My Services"}
                     </h1>
                     <p className="text-zinc-500 dark:text-zinc-400 text-sm max-w-xl leading-relaxed">

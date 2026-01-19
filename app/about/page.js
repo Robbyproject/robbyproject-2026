@@ -11,6 +11,11 @@ import {
 } from "lucide-react";
 import { SiGithub, SiLinkedin, SiInstagram } from "react-icons/si";
 
+// --- GLOBAL CACHE VARIABLES ---
+// Variable ini ditaruh di luar component agar datanya persisten saat navigasi
+let cachedEducation = null;
+let cachedExperience = null;
+
 // Variabel Animasi
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -23,26 +28,35 @@ const itemVariants = {
 };
 
 export default function AboutPage() {
-    // STATE DATA
-    const [educationList, setEducationList] = useState([]);
-    const [experienceList, setExperienceList] = useState([]);
+    // STATE DATA (Inisialisasi dengan cache jika ada)
+    const [educationList, setEducationList] = useState(cachedEducation || []);
+    const [experienceList, setExperienceList] = useState(cachedExperience || []);
 
-    // STATE LOADING
-    const [loadingEdu, setLoadingEdu] = useState(true);
-    const [loadingExp, setLoadingExp] = useState(true);
+    // STATE LOADING (Hanya loading jika cache kosong)
+    const [loadingEdu, setLoadingEdu] = useState(!cachedEducation);
+    const [loadingExp, setLoadingExp] = useState(!cachedExperience);
 
     useEffect(() => {
-
-        // 1. Fetch Education (Sesuai kolom tabel kamu: school_name, major, years)
+        // 1. Fetch Education
         async function getEducation() {
+            // Jika sudah ada di cache, jangan fetch ulang
+            if (cachedEducation) {
+                setLoadingEdu(false);
+                return;
+            }
+
             try {
+                setLoadingEdu(true);
                 const { data, error } = await supabase
-                    .from('education') // Pastikan nama tabel di Supabase 'education' (kecil semua)
+                    .from('education')
                     .select('*')
                     .order('id', { ascending: false });
 
                 if (error) throw error;
+
                 setEducationList(data || []);
+                cachedEducation = data; // Simpan ke cache global
+
             } catch (error) {
                 console.error("Gagal ambil education:", error.message);
             } finally {
@@ -50,9 +64,16 @@ export default function AboutPage() {
             }
         }
 
-        // 2. Fetch Experience (Tabel baru)
+        // 2. Fetch Experience
         async function getExperience() {
+            // Jika sudah ada di cache, jangan fetch ulang
+            if (cachedExperience) {
+                setLoadingExp(false);
+                return;
+            }
+
             try {
+                setLoadingExp(true);
                 const { data, error } = await supabase
                     .from('experience')
                     .select('*')
@@ -60,7 +81,10 @@ export default function AboutPage() {
                     .order('id', { ascending: false });
 
                 if (error) throw error;
+
                 setExperienceList(data || []);
+                cachedExperience = data; // Simpan ke cache global
+
             } catch (error) {
                 console.error("Gagal ambil experience:", error.message);
             } finally {
@@ -68,6 +92,7 @@ export default function AboutPage() {
             }
         }
 
+        // Jalankan fungsi
         getEducation();
         getExperience();
     }, []);
@@ -149,7 +174,7 @@ export default function AboutPage() {
                     {/* MAIN CONTENT */}
                     <motion.div variants={itemVariants} className="lg:col-span-8 space-y-8">
 
-                        {/* Biography - UPDATED HERE */}
+                        {/* Biography */}
                         <div className="rounded-[2.5rem] border border-white/10 bg-[#111] p-8 md:p-10">
                             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                                 <span className="text-blue-500">#</span> Biography
@@ -231,11 +256,9 @@ export default function AboutPage() {
                                         <div key={edu.id} className="group p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-white/20 transition-all">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    {/* Mapping sesuai kolom tabel kamu: major & school_name */}
                                                     <h3 className="text-white font-bold">{edu.major}</h3>
                                                     <p className="text-zinc-400 text-sm">{edu.school_name}</p>
                                                 </div>
-                                                {/* Mapping sesuai kolom tabel kamu: years */}
                                                 <span className="text-xs font-mono text-zinc-500 bg-[#1a1a1a] px-2 py-1 rounded border border-white/5">
                                                     {edu.years}
                                                 </span>

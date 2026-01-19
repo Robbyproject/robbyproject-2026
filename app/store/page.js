@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, useMemo, useRef } from "react";
+
+import { useState, useEffect, useMemo, useRef, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Search,
@@ -13,6 +14,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
+// Helper Formatter (Ditaruh di luar agar tidak direcreate setiap render)
+const formatRupiah = (num) => {
+    return new Intl.NumberFormat("id-ID", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(num);
+};
+
 export default function StorePage() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -25,8 +34,31 @@ export default function StorePage() {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef(null);
 
+    // 1. FETCH DATA (Safe for unmount)
     useEffect(() => {
+        let isMounted = true;
+
+        const fetchProducts = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('products')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (isMounted) {
+                    if (error) throw error;
+                    setProducts(data || []);
+                }
+            } catch (error) {
+                console.error("Error fetching products:", error);
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        };
+
         fetchProducts();
+
+        return () => { isMounted = false; };
     }, []);
 
     // Logic Click Outside Dropdown
@@ -36,44 +68,37 @@ export default function StorePage() {
                 setIsFilterOpen(false);
             }
         }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [filterRef]);
-
-    const fetchProducts = async () => {
-        try {
-            setLoading(true);
-            const { data, error } = await supabase
-                .from('products')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            setProducts(data || []);
-        } catch (error) {
-            console.error("Error fetching products:", error);
-        } finally {
-            setLoading(false);
+        if (isFilterOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
         }
-    };
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isFilterOpen]);
 
     // --- LOGIC: EXTRACT CATEGORIES ---
     const categories = useMemo(() => {
-        // Ambil kategori dari data produk, hilangkan duplikat & nilai kosong
         const uniqueCats = new Set(products.map(p => p.category).filter(Boolean));
-        // Urutkan abjad
         return ["All", ...Array.from(uniqueCats).sort()];
     }, [products]);
 
     // --- LOGIC: FILTER PRODUCTS ---
     const filteredProducts = useMemo(() => {
+        // Fast path jika data kosong
+        if (!products.length) return [];
+
+        const query = searchQuery.toLowerCase().trim();
+        const isAllCat = selectedCategory === "All";
+
+        // Fast path jika tidak ada filter
+        if (!query && isAllCat) return products;
+
         return products.filter((item) => {
-            const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
+            const matchesCategory = isAllCat || item.category === selectedCategory;
+            if (!matchesCategory) return false;
 
-            const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
+            if (!query) return true;
 
-            return matchesSearch && matchesCategory;
+            return item.name?.toLowerCase().includes(query) ||
+                item.description?.toLowerCase().includes(query);
         });
     }, [products, searchQuery, selectedCategory]);
 
@@ -84,7 +109,7 @@ export default function StorePage() {
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-zinc-200 dark:border-white/5 pb-8">
                 <div className="space-y-2 max-w-lg">
                     <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 dark:text-white tracking-tight flex items-center gap-3">
-                        <ShoppingBag className="text-emerald-500" size={32} />
+                        <ShoppingBag className="text-emerald-500 fill-emerald-500/10" size={32} />
                         Store Collection
                     </h1>
                     <p className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">
@@ -93,11 +118,10 @@ export default function StorePage() {
                 </div>
 
                 {/* --- CONTROLS (SEARCH & FILTER) --- */}
-                {/* Menggunakan 'flex-row' agar selalu sejajar ke samping di Mobile */}
                 <div className="flex flex-row items-center gap-2 w-full lg:w-auto relative z-20">
 
-                    {/* 1. Search Bar (flex-1 agar mengisi ruang sisa) */}
-                    <div className="relative flex-1 group">
+                    {/* 1. Search Bar */}
+                    <div className="relative flex-1 group min-w-[200px]">
                         <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                             <Search size={14} className="text-zinc-400 group-focus-within:text-emerald-500 transition-colors" />
                         </div>
@@ -122,7 +146,6 @@ export default function StorePage() {
                         >
                             <div className="flex items-center gap-2">
                                 <ListFilter size={16} />
-                                {/* Teks sembunyi di HP kecil */}
                                 <span className="hidden xs:inline truncate max-w-[80px] md:max-w-none">
                                     {selectedCategory === "All" ? "Filter" : selectedCategory}
                                 </span>
@@ -151,13 +174,13 @@ export default function StorePage() {
                                                     setIsFilterOpen(false);
                                                 }}
                                                 className={`w-full flex items-center justify-between px-2 py-2 text-sm rounded-lg transition-colors text-left
-                                            ${selectedCategory === cat
+                                                ${selectedCategory === cat
                                                         ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-medium"
                                                         : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                                                     }`}
                                             >
-                                                {cat}
-                                                {selectedCategory === cat && <Check size={14} />}
+                                                <span className="truncate">{cat}</span>
+                                                {selectedCategory === cat && <Check size={14} className="shrink-0" />}
                                             </button>
                                         ))}
                                     </div>
@@ -173,7 +196,17 @@ export default function StorePage() {
                 // SKELETON LOADER
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {[...Array(4)].map((_, i) => (
-                        <SkeletonCard key={i} />
+                        <div key={i} className="p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-4">
+                            <div className="w-full aspect-[4/3] bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+                            <div className="space-y-2">
+                                <div className="flex justify-between gap-4">
+                                    <div className="h-5 bg-zinc-200 dark:bg-zinc-800 rounded w-2/3 animate-pulse" />
+                                    <div className="h-5 bg-zinc-200 dark:bg-zinc-800 rounded w-1/4 animate-pulse" />
+                                </div>
+                                <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-full animate-pulse" />
+                            </div>
+                            <div className="h-10 bg-zinc-200 dark:bg-zinc-800 rounded-xl w-full mt-2 animate-pulse" />
+                        </div>
                     ))}
                 </div>
             ) : filteredProducts.length === 0 ? (
@@ -192,8 +225,8 @@ export default function StorePage() {
                 // REAL CONTENT
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     <AnimatePresence mode="popLayout">
-                        {filteredProducts.map((item, index) => (
-                            <GlassCard key={item.id} item={item} index={index} />
+                        {filteredProducts.map((item) => (
+                            <ProductCard key={item.id} item={item} />
                         ))}
                     </AnimatePresence>
                 </div>
@@ -202,26 +235,8 @@ export default function StorePage() {
     );
 }
 
-// --- COMPONENT: SKELETON CARD ---
-function SkeletonCard() {
-    return (
-        <div className="p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-4">
-            <div className="w-full aspect-[4/3] bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
-            <div className="space-y-2">
-                <div className="flex justify-between gap-4">
-                    <div className="h-5 bg-zinc-200 dark:bg-zinc-800 rounded w-2/3 animate-pulse" />
-                    <div className="h-5 bg-zinc-200 dark:bg-zinc-800 rounded w-1/4 animate-pulse" />
-                </div>
-                <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-full animate-pulse" />
-            </div>
-            <div className="h-10 bg-zinc-200 dark:bg-zinc-800 rounded-xl w-full mt-2 animate-pulse" />
-        </div>
-    );
-}
-
-// --- COMPONENT: GLASS CARD (Product) ---
-function GlassCard({ item, index }) {
-    const formatRupiah = (num) => new Intl.NumberFormat("id-ID").format(num);
+// --- OPTIMIZED COMPONENT: GLASS CARD (Memoized) ---
+const ProductCard = memo(function ProductCard({ item }) {
     const price = item.price || 0;
 
     return (
@@ -230,7 +245,7 @@ function GlassCard({ item, index }) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.3, ease: "backOut" }}
             className="group flex flex-col h-full"
         >
             <div className="relative flex flex-col h-full p-3 rounded-2xl transition-all duration-300
@@ -239,12 +254,14 @@ function GlassCard({ item, index }) {
             ">
 
                 {/* 1. IMAGE SECTION */}
-                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800 mb-4">
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800 mb-4 border border-zinc-100 dark:border-white/5">
                     {item.image_url ? (
                         <Image
                             src={item.image_url}
                             alt={item.name}
                             fill
+                            // OPTIMASI: Download gambar sesuai ukuran layar, bukan full size
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                             className="object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                     ) : (
@@ -261,7 +278,7 @@ function GlassCard({ item, index }) {
 
                 {/* 2. TEXT CONTENT */}
                 <div className="flex flex-col flex-1 px-1">
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between mb-2">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded border border-emerald-100 dark:border-emerald-800/50">
                             {item.category || "Asset"}
                         </span>
@@ -290,4 +307,4 @@ function GlassCard({ item, index }) {
             </div>
         </motion.div>
     );
-}
+});

@@ -1,15 +1,17 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppProviders } from "@/components/providers/AppProviders";
-import NextTopLoader from "nextjs-toploader"; 
-import SystemLayout from "@/components/layout/SystemLayout"; 
-import ContentWrapper from "@/components/layout/ContentWrapper"; 
+import NextTopLoader from "nextjs-toploader";
+import SystemLayout from "@/components/layout/SystemLayout";
+import ContentWrapper from "@/components/layout/ContentWrapper";
 import AnalyticsTracker from "@/components/features/AnalyticsTracker";
-import ScrollToTop from "@/components/ui/ScrollToTop";
 
-// ❌ SmoothScroll SUDAH DIHAPUS DARI SINI (Pindah ke SystemLayout)
-
-const inter = Inter({ subsets: ["latin"] });
+// Optimasi Font: Gunakan variable untuk integrasi Tailwind yang lebih baik
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata = {
   title: {
@@ -25,28 +27,28 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} bg-zinc-50 dark:bg-[#0a0a0a] text-zinc-900 dark:text-white transition-colors duration-300 min-h-screen flex flex-col overflow-x-hidden m-0 p-0 antialiased`}>
-        
-        {/* Google Analytics Tracker */}
-        <AnalyticsTracker /> 
+      <body
+        className={`
+          ${inter.variable} font-sans
+          bg-zinc-50 dark:bg-[#0a0a0a] 
+          text-zinc-900 dark:text-white 
+          min-h-screen flex flex-col antialiased selection:bg-cyan-500/30 selection:text-cyan-500
+        `}
+      >
+        <AnalyticsTracker />
 
         <AppProviders>
-            
-            {/* Loading Bar di atas layar */}
-            <NextTopLoader color="#06b6d4" showSpinner={false} height={3} />
-            
-            {/* SystemLayout sekarang yang akan menangandle scroll (Lenis).
-               Jadi di sini kita kirim children mentahan saja.
-            */}
-            <SystemLayout>
-                <ContentWrapper>
-                   {children}
-                </ContentWrapper>
-            </SystemLayout>
+          {/* Progress Bar Top */}
+          <NextTopLoader color="#06b6d4" showSpinner={false} height={3} shadow="0 0 10px #06b6d4,0 0 5px #06b6d4" />
 
-            {/* Tombol Back to Top */}
-            <ScrollToTop />
-            
+          {/* Layout Utama (Sidebar + Scroll Area) */}
+          <SystemLayout>
+            {/* ContentWrapper opsional, pastikan dia tidak membatasi width jika SystemLayout sudah full */}
+            <ContentWrapper>
+              {children}
+            </ContentWrapper>
+          </SystemLayout>
+
         </AppProviders>
       </body>
     </html>
