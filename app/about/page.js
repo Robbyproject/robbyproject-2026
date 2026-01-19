@@ -6,95 +6,92 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import {
     Mail, MapPin, Briefcase,
-    GraduationCap, User, Download,
-    Loader2
+    GraduationCap, User, Download
 } from "lucide-react";
 import { SiGithub, SiLinkedin, SiInstagram } from "react-icons/si";
 
 // --- GLOBAL CACHE VARIABLES ---
-// Variable ini ditaruh di luar component agar datanya persisten saat navigasi
+// Data persisten agar tidak blank saat navigasi bolak-balik
 let cachedEducation = null;
 let cachedExperience = null;
 
-// Variabel Animasi
+// --- VARIAN ANIMASI ---
 const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1, // Jeda antar elemen 0.1 detik
+            delayChildren: 0.1
+        }
+    }
 };
 
 const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+    hidden: { opacity: 0, y: 20, filter: "blur(5px)" },
+    visible: {
+        opacity: 1,
+        y: 0,
+        filter: "blur(0px)",
+        transition: { duration: 0.5, ease: "easeOut" }
+    }
+};
+
+const imageVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+        opacity: 1,
+        scale: 1,
+        transition: { duration: 0.6, ease: "backOut" }
+    }
 };
 
 export default function AboutPage() {
-    // STATE DATA (Inisialisasi dengan cache jika ada)
-    const [educationList, setEducationList] = useState(cachedEducation || []);
-    const [experienceList, setExperienceList] = useState(cachedExperience || []);
-
-    // STATE LOADING (Hanya loading jika cache kosong)
-    const [loadingEdu, setLoadingEdu] = useState(!cachedEducation);
-    const [loadingExp, setLoadingExp] = useState(!cachedExperience);
+    // STATE: null = Loading, [] = Kosong, [...] = Ada Data
+    const [educationList, setEducationList] = useState(cachedEducation);
+    const [experienceList, setExperienceList] = useState(cachedExperience);
 
     useEffect(() => {
-        // 1. Fetch Education
-        async function getEducation() {
-            // Jika sudah ada di cache, jangan fetch ulang
-            if (cachedEducation) {
-                setLoadingEdu(false);
-                return;
-            }
+        // Jika cache sudah ada isinya, stop fetch.
+        if (cachedEducation && cachedExperience) return;
 
+        const fetchData = async () => {
             try {
-                setLoadingEdu(true);
-                const { data, error } = await supabase
-                    .from('education')
-                    .select('*')
-                    .order('id', { ascending: false });
+                // Fetch paralel agar lebih cepat
+                const [eduRes, expRes] = await Promise.all([
+                    supabase
+                        .from('education')
+                        .select('*')
+                        .order('id', { ascending: false }),
+                    supabase
+                        .from('experience')
+                        .select('*')
+                        .eq('is_active', true)
+                        .order('id', { ascending: false })
+                ]);
 
-                if (error) throw error;
+                // Set Data Education
+                if (eduRes.data) {
+                    setEducationList(eduRes.data);
+                    cachedEducation = eduRes.data;
+                } else {
+                    setEducationList([]); // Jika error/kosong
+                }
 
-                setEducationList(data || []);
-                cachedEducation = data; // Simpan ke cache global
+                // Set Data Experience
+                if (expRes.data) {
+                    setExperienceList(expRes.data);
+                    cachedExperience = expRes.data;
+                } else {
+                    setExperienceList([]); // Jika error/kosong
+                }
 
             } catch (error) {
-                console.error("Gagal ambil education:", error.message);
-            } finally {
-                setLoadingEdu(false);
+                console.error("Error loading about data:", error);
             }
-        }
+        };
 
-        // 2. Fetch Experience
-        async function getExperience() {
-            // Jika sudah ada di cache, jangan fetch ulang
-            if (cachedExperience) {
-                setLoadingExp(false);
-                return;
-            }
-
-            try {
-                setLoadingExp(true);
-                const { data, error } = await supabase
-                    .from('experience')
-                    .select('*')
-                    .eq('is_active', true)
-                    .order('id', { ascending: false });
-
-                if (error) throw error;
-
-                setExperienceList(data || []);
-                cachedExperience = data; // Simpan ke cache global
-
-            } catch (error) {
-                console.error("Gagal ambil experience:", error.message);
-            } finally {
-                setLoadingExp(false);
-            }
-        }
-
-        // Jalankan fungsi
-        getEducation();
-        getExperience();
+        fetchData();
     }, []);
 
     return (
@@ -106,7 +103,7 @@ export default function AboutPage() {
                 className="w-full flex flex-col gap-10"
             >
 
-                {/* HEADER SECTION */}
+                {/* --- HEADER SECTION --- */}
                 <motion.div variants={itemVariants} className="space-y-2 border-b border-white/5 pb-8">
                     <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight flex items-center gap-3">
                         <User className="text-zinc-500" size={32} /> About Me
@@ -116,14 +113,15 @@ export default function AboutPage() {
                     </p>
                 </motion.div>
 
-                {/* MAIN GRID LAYOUT */}
+                {/* --- MAIN GRID LAYOUT --- */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
 
-                    {/* SIDEBAR (Profile Picture & Quick Info) */}
+                    {/* --- SIDEBAR (Profile Picture & Quick Info) --- */}
                     <motion.div variants={itemVariants} className="lg:col-span-4 space-y-6">
                         <div className="rounded-[2rem] border border-white/10 bg-[#111] p-2 overflow-hidden sticky top-24">
-                            <div className="relative aspect-square rounded-[1.5rem] overflow-hidden bg-zinc-800">
-                                {/* Ganti URL foto sesuai bucket Supabase kamu */}
+
+                            {/* Profile Image dengan Animasi Scale */}
+                            <motion.div variants={imageVariants} className="relative aspect-square rounded-[1.5rem] overflow-hidden bg-zinc-800">
                                 <img
                                     src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa1.webp"
                                     alt="Profile"
@@ -140,9 +138,9 @@ export default function AboutPage() {
                                         Open to Work
                                     </div>
                                     <h3 className="text-xl font-bold text-white">Robby Fabian</h3>
-                                    <p className="text-zinc-300 text-sm">Graphic Designer | IT Enthusias</p>
+                                    <p className="text-zinc-300 text-sm">Graphic Designer | IT Enthusiast</p>
                                 </div>
-                            </div>
+                            </motion.div>
 
                             <div className="p-4 space-y-4">
                                 <div className="flex items-center gap-2 text-zinc-500 text-sm">
@@ -153,13 +151,13 @@ export default function AboutPage() {
                                 </div>
 
                                 <div className="flex gap-2 pt-2">
-                                    <Link href="https://github.com/Robbyproject" className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors">
+                                    <Link href="https://github.com/Robbyproject" target="_blank" className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors">
                                         <SiGithub size={18} />
                                     </Link>
-                                    <Link href="https://linkedin.com/in/robby-fabian" className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-blue-400 hover:bg-blue-500/10 transition-colors">
+                                    <Link href="https://linkedin.com/in/robby-fabian" target="_blank" className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-blue-400 hover:bg-blue-500/10 transition-colors">
                                         <SiLinkedin size={18} />
                                     </Link>
-                                    <Link href="https://instagram.com/mikookatsunagi" className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-pink-400 hover:bg-pink-500/10 transition-colors">
+                                    <Link href="https://instagram.com/mikookatsunagi" target="_blank" className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-pink-400 hover:bg-pink-500/10 transition-colors">
                                         <SiInstagram size={18} />
                                     </Link>
                                 </div>
@@ -171,11 +169,11 @@ export default function AboutPage() {
                         </div>
                     </motion.div>
 
-                    {/* MAIN CONTENT */}
+                    {/* --- MAIN CONTENT --- */}
                     <motion.div variants={itemVariants} className="lg:col-span-8 space-y-8">
 
                         {/* Biography */}
-                        <div className="rounded-[2.5rem] border border-white/10 bg-[#111] p-8 md:p-10">
+                        <motion.div variants={itemVariants} className="rounded-[2.5rem] border border-white/10 bg-[#111] p-8 md:p-10">
                             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                                 <span className="text-blue-500">#</span> Biography
                             </h2>
@@ -187,18 +185,20 @@ export default function AboutPage() {
                                     Currently, I focus on creating and developing applications or websites where I also combine minimalist and elegant designs in websites or applications so that they are visually appealing to clients.
                                 </p>
                             </div>
-                        </div>
+                        </motion.div>
 
-                        {/* EXPERIENCE SECTION (DYNAMIC DARI SUPABASE) */}
-                        <div className="rounded-[2.5rem] border border-white/10 bg-[#111] p-8 md:p-10">
+                        {/* EXPERIENCE SECTION */}
+                        <motion.div variants={itemVariants} className="rounded-[2.5rem] border border-white/10 bg-[#111] p-8 md:p-10">
                             <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
                                 <Briefcase size={24} className="text-zinc-500" /> Work Experience
                             </h2>
 
                             <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-zinc-800 before:to-transparent">
-                                {loadingExp ? (
-                                    // SKELETON LOADING EXPERIENCE
-                                    [1, 2].map((_, i) => (
+
+                                {/* LOGIC LOADING EXPERIENCE */}
+                                {!experienceList ? (
+                                    // SKELETON
+                                    [1, 2].map((i) => (
                                         <div key={i} className="ml-10 space-y-3 animate-pulse">
                                             <div className="h-6 w-1/3 bg-zinc-800 rounded"></div>
                                             <div className="h-4 w-1/4 bg-zinc-800 rounded"></div>
@@ -206,6 +206,7 @@ export default function AboutPage() {
                                         </div>
                                     ))
                                 ) : experienceList.length > 0 ? (
+                                    // DATA
                                     experienceList.map((job) => (
                                         <div key={job.id} className="relative flex items-start gap-6 group">
                                             {/* Dot Indicator */}
@@ -228,21 +229,24 @@ export default function AboutPage() {
                                         </div>
                                     ))
                                 ) : (
+                                    // EMPTY STATE
                                     <p className="ml-10 text-zinc-500 italic">No work experience added yet.</p>
                                 )}
                             </div>
-                        </div>
+                        </motion.div>
 
-                        {/* EDUCATION SECTION (DYNAMIC DARI SUPABASE) */}
-                        <div className="rounded-[2.5rem] border border-white/10 bg-[#111] p-8 md:p-10">
+                        {/* EDUCATION SECTION */}
+                        <motion.div variants={itemVariants} className="rounded-[2.5rem] border border-white/10 bg-[#111] p-8 md:p-10">
                             <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
                                 <GraduationCap size={24} className="text-zinc-500" /> Education
                             </h2>
 
                             <div className="grid grid-cols-1 gap-4">
-                                {loadingEdu ? (
-                                    // SKELETON LOADING EDUCATION
-                                    [1].map((_, i) => (
+
+                                {/* LOGIC LOADING EDUCATION */}
+                                {!educationList ? (
+                                    // SKELETON
+                                    [1].map((i) => (
                                         <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/5 animate-pulse">
                                             <div className="flex justify-between items-start mb-2">
                                                 <div className="h-5 w-1/3 bg-zinc-700 rounded mb-2"></div>
@@ -252,6 +256,7 @@ export default function AboutPage() {
                                         </div>
                                     ))
                                 ) : educationList.length > 0 ? (
+                                    // DATA
                                     educationList.map((edu) => (
                                         <div key={edu.id} className="group p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-white/20 transition-all">
                                             <div className="flex justify-between items-start">
@@ -266,10 +271,11 @@ export default function AboutPage() {
                                         </div>
                                     ))
                                 ) : (
+                                    // EMPTY STATE
                                     <p className="text-zinc-500 text-sm italic">No education details added yet.</p>
                                 )}
                             </div>
-                        </div>
+                        </motion.div>
 
                     </motion.div>
                 </div>

@@ -18,8 +18,7 @@ import {
 
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
 
-// --- GLOBAL CACHE VARIABLES (Added for Performance) ---
-// Variable ini ditaruh di luar component agar datanya tidak hilang saat pindah halaman
+// --- GLOBAL CACHE VARIABLES (Optimasi Performance) ---
 let cachedBanner = null;
 let cachedProjects = null;
 
@@ -108,56 +107,46 @@ const mySkills = [
 const heroDescription = `I am a Graphic Designer and Front-End Developer skilled in creating visually appealing, clean, and functional digital interfaces. I work with Next.js, TypeScript, and Tailwind CSS to build responsive user experiences, combining creative design with technical precision. As a detail-oriented and collaborative individual, I am committed to delivering high-quality, modern, and user-friendly results.`;
 
 export default function Home() {
-  // LOGIKA CACHING:
-  // 1. Cek apakah di variabel global (cachedBanner) sudah ada datanya?
-  // Jika ada, pakai itu. Jika tidak, baru null.
-  const [featuredContent, setFeaturedContent] = useState(cachedBanner);
+  // --- CLEAN LOGIC: Hapus State Loading yang manual ---
+  // Cukup andalkan apakah data ada atau tidak.
+  const [featuredContent, setFeaturedContent] = useState(cachedBanner || null);
   const [projects, setProjects] = useState(cachedProjects || []);
 
-  // 2. Loading hanya true jika data BELUM ada di cache
-  const [loading, setLoading] = useState(!cachedBanner);
-
   useEffect(() => {
-    // 3. Jika data sudah ada di cache, stop di sini. Tidak perlu fetch ulang.
-    if (cachedBanner && cachedProjects && cachedProjects.length > 0) {
-      setLoading(false);
-      return;
-    }
+    // Jika data sudah ada di cache, tidak perlu fetch
+    if (cachedBanner && cachedProjects && cachedProjects.length > 0) return;
 
     const fetchData = async () => {
       try {
-        setLoading(true);
+        // Parallel Fetching biar lebih cepat
+        const [bannerResponse, projectResponse] = await Promise.all([
+          supabase
+            .from("banners")
+            .select("*")
+            .eq("is_active", true)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single(),
 
-        // Fetch Banner
-        const { data: bannerData } = await supabase
-          .from("banners")
-          .select("*")
-          .eq("is_active", true)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
+          supabase
+            .from("projects")
+            .select("id, title, image_url")
+            .order("id", { ascending: false })
+            .limit(4)
+        ]);
 
-        if (bannerData) {
-          setFeaturedContent(bannerData);
-          cachedBanner = bannerData; // Simpan ke global variable
+        if (bannerResponse.data) {
+          setFeaturedContent(bannerResponse.data);
+          cachedBanner = bannerResponse.data;
         }
 
-        // Fetch Projects
-        const { data: projectData } = await supabase
-          .from("projects")
-          .select("id, title, image_url")
-          .order("id", { ascending: false })
-          .limit(4);
-
-        if (projectData) {
-          setProjects(projectData);
-          cachedProjects = projectData; // Simpan ke global variable
+        if (projectResponse.data) {
+          setProjects(projectResponse.data);
+          cachedProjects = projectResponse.data;
         }
 
       } catch (error) {
         console.error("Error loading data:", error.message);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -166,9 +155,10 @@ export default function Home() {
 
   return (
     <div className="w-full">
+      {/* Container utama tidak boleh ada Logic Loading yang memblokir render */}
       <motion.div variants={containerVariants} initial="hidden" animate="visible" className="flex flex-col space-y-16 w-full">
 
-        {/* --- HERO SECTION --- */}
+        {/* --- HERO SECTION (Teks Static Selalu Muncul Duluan) --- */}
         <motion.section variants={itemVariants} className="flex flex-col gap-6">
           <div className="flex justify-between items-start w-full">
             <div className="space-y-2">
@@ -223,8 +213,9 @@ export default function Home() {
             </div>
           </div>
 
-          {loading ? (
-            // SKELETON
+          {/* LOGIC BARU: Cek data langsung (!featuredContent) */}
+          {!featuredContent ? (
+            // INLINE SKELETON (Tidak Memblokir Halaman)
             <div className="w-full h-[380px] md:h-[420px] rounded-[2.5rem] bg-zinc-900 border border-white/10 relative overflow-hidden flex flex-col justify-end animate-pulse">
               <div className="p-12 space-y-4 w-full max-w-lg">
                 <div className="h-6 w-24 bg-zinc-800 rounded-full" />
@@ -232,7 +223,7 @@ export default function Home() {
                 <div className="h-4 w-2/3 bg-zinc-800 rounded" />
               </div>
             </div>
-          ) : featuredContent && (
+          ) : (
             <Link href="/contact" className="block group relative w-full h-[380px] md:h-[420px] rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-zinc-900">
 
               <Image
@@ -293,6 +284,8 @@ export default function Home() {
               {/* IMAGES GRID */}
               <div className="absolute top-4 -right-2 md:right-4 w-[60%] md:w-[45%] h-full flex flex-col justify-center pointer-events-none">
                 <div className="grid grid-cols-2 gap-3 transform rotate-6 opacity-40 grayscale group-hover:grayscale-0 group-hover:rotate-0 group-hover:opacity-100 transition-all duration-500 ease-out origin-center">
+
+                  {/* LOGIC SKELETON: Array check */}
                   {projects.length > 0 ? (
                     projects.map((proj, idx) => (
                       <div key={proj.id} className={`relative aspect-[4/3] rounded-lg overflow-hidden border border-white/20 bg-zinc-800 shadow-lg ${idx % 2 !== 0 ? 'translate-y-4' : ''}`}>
@@ -312,6 +305,7 @@ export default function Home() {
                       </div>
                     ))
                   ) : (
+                    // PROJECT SKELETON
                     [1, 2, 3, 4].map((i) => (
                       <div key={i} className="aspect-[4/3] rounded-lg bg-white/5 border border-white/5 animate-pulse" />
                     ))
