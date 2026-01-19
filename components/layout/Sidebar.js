@@ -4,7 +4,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useLanguage } from "@/components/providers/AppProviders";
-import { motion, AnimatePresence } from "framer-motion"; // Import Framer untuk animasi logic yang lebih baik
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, User, Briefcase, Trophy, Mail, Sun, Moon, Menu,
   Clapperboard, Heart, Zap, LayoutDashboard, ChevronDown, Gamepad2,
@@ -39,7 +39,6 @@ export default function Sidebar() {
     }
   }, [pathname]);
 
-  // Memoize navItems agar tidak re-calc setiap render
   const navItems = useMemo(() => [
     { name: t.nav_home, id: "hero", icon: Home, type: "scroll" },
     { name: t.nav_about, path: "/about", icon: User, type: "page" },
@@ -61,6 +60,7 @@ export default function Sidebar() {
     { name: t.nav_contact, path: "/contact", icon: Mail, type: "page" },
   ], [t]);
 
+  // --- BAGIAN INI YANG SAYA PERBAIKI ---
   const handleNavigation = (item) => {
     if (item.type === "dropdown") {
       setOpenDropdown(openDropdown === item.id ? null : item.id);
@@ -68,7 +68,13 @@ export default function Sidebar() {
     }
 
     if (item.type === "page") {
-      router.push(item.path);
+      // FIX UTAMA: Jika ke Dashboard, paksa Hard Refresh (window.location)
+      // Ini membersihkan memori dan memastikan data di-fetch ulang dari nol
+      if (item.path === "/dashboard") {
+        window.location.href = item.path;
+      } else {
+        router.push(item.path); // Halaman lain tetap pakai Soft Navigation (cepat)
+      }
     } else if (item.type === "scroll") {
       if (pathname === "/") {
         scrollToId(item.id);
@@ -80,6 +86,7 @@ export default function Sidebar() {
     // UX Logic: Close mobile menu immediately upon selection
     setIsMobileOpen(false);
   };
+  // -------------------------------------
 
   if (!mounted) return null;
 
@@ -191,14 +198,13 @@ export default function Sidebar() {
                     <ChevronDown size={14} className={`transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""}`} />
                   </button>
 
-                  {/* UX LOGIC: Ganti CSS Class animation dengan Framer Motion AnimatePresence agar height auto & smooth */}
                   <AnimatePresence initial={false}>
                     {isDropdownOpen && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }} // Spring-like ease
+                        transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
                         className="overflow-hidden"
                       >
                         <div className="flex flex-col gap-1 pl-4 ml-4 border-l border-zinc-200 dark:border-zinc-800 mt-1 pb-1">
@@ -239,7 +245,6 @@ export default function Sidebar() {
                   }
                 `}
               >
-                {/* Active Indicator (Small Dot) */}
                 {isActive && <div className="absolute left-0 w-1 h-5 bg-cyan-500 rounded-r-full" />}
 
                 <item.icon size={18} strokeWidth={2} className={`transition-transform duration-300 ${isActive ? "scale-105" : "group-hover:scale-105"}`} />
