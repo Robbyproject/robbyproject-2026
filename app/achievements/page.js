@@ -16,7 +16,7 @@ const containerVariants = {
     visible: {
         opacity: 1,
         transition: {
-            staggerChildren: 0.1, // Jeda 0.1s antar elemen
+            staggerChildren: 0.1,
             delayChildren: 0.1
         }
     }
@@ -34,18 +34,17 @@ const itemVariants = {
 
 export default function AchievementsPage() {
     const { t } = useLanguage();
+    // HAPUS state loading
     const [achievements, setAchievements] = useState([]);
-    const [loading, setLoading] = useState(true);
 
     // --- STATES FOR SEARCH & FILTER ---
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All");
 
-    // State untuk Dropdown
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef(null);
 
-    // 1. FETCH DATA
+    // 1. FETCH DATA (Tanpa setLoading)
     useEffect(() => {
         let isMounted = true;
 
@@ -58,7 +57,7 @@ export default function AchievementsPage() {
             if (isMounted) {
                 if (data) setAchievements(data);
                 if (error) console.error("Error loading achievements:", error);
-                setLoading(false);
+                // Tidak ada setLoading(false) lagi di sini
             }
         };
 
@@ -74,7 +73,6 @@ export default function AchievementsPage() {
         setIsFilterOpen(false);
     }, []);
 
-    // Logic Click Outside
     useEffect(() => {
         function handleClickOutside(event) {
             if (filterRef.current && !filterRef.current.contains(event.target)) {
@@ -119,7 +117,6 @@ export default function AchievementsPage() {
     return (
         <div className="w-full min-h-[101vh] pb-20 pt-4">
 
-            {/* WRAPPER ANIMASI UTAMA */}
             <motion.div
                 variants={containerVariants}
                 initial="hidden"
@@ -127,12 +124,11 @@ export default function AchievementsPage() {
                 className="space-y-10"
             >
 
-                {/* --- HEADER SECTION --- */}
+                {/* --- HEADER --- */}
                 <motion.div
                     variants={itemVariants}
                     className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-zinc-200 dark:border-white/5 pb-8"
                 >
-                    {/* Judul & Deskripsi */}
                     <div className="space-y-2 max-w-lg">
                         <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 dark:text-white tracking-tight flex items-center gap-3">
                             <Trophy className="text-yellow-500" size={32} />
@@ -143,10 +139,9 @@ export default function AchievementsPage() {
                         </p>
                     </div>
 
-                    {/* --- CONTROLS (SEARCH & FILTER) --- */}
+                    {/* Controls */}
                     <div className="flex flex-row items-center gap-2 w-full lg:w-auto relative z-20">
-
-                        {/* Search Bar */}
+                        {/* Search */}
                         <div className="relative flex-1 group">
                             <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                                 <Search size={14} className="text-zinc-400 group-focus-within:text-yellow-500 transition-colors" />
@@ -160,7 +155,7 @@ export default function AchievementsPage() {
                             />
                         </div>
 
-                        {/* Dropdown Filter */}
+                        {/* Filter */}
                         <div className="relative shrink-0" ref={filterRef}>
                             <button
                                 onClick={toggleFilter}
@@ -189,9 +184,6 @@ export default function AchievementsPage() {
                                         className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#151515] border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden z-50 p-1"
                                     >
                                         <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
-                                            <div className="px-2 py-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-                                                Categories
-                                            </div>
                                             {categories.map((cat) => (
                                                 <button
                                                     key={cat}
@@ -214,23 +206,20 @@ export default function AchievementsPage() {
                     </div>
                 </motion.div>
 
-                {/* --- MAIN CONTENT GRID --- */}
-                {loading ? (
-                    // SKELETON LOADING
-                    <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-                        {[...Array(8)].map((_, i) => (
-                            <div key={i} className="break-inside-avoid mb-4 border border-zinc-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-[#121212] overflow-hidden">
-                                <div className="w-full h-40 bg-zinc-200 dark:bg-zinc-900 animate-pulse"></div>
-                                <div className="p-4 space-y-3">
-                                    <div className="h-4 bg-zinc-200 dark:bg-zinc-900 rounded w-1/3 animate-pulse"></div>
-                                    <div className="h-6 bg-zinc-200 dark:bg-zinc-900 rounded w-3/4 animate-pulse"></div>
-                                    <div className="h-3 bg-zinc-200 dark:bg-zinc-900 rounded w-full animate-pulse"></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : filteredAchievements.length === 0 ? (
-                    // EMPTY STATE
+                {/* --- CONTENT GRID (Langsung Render, Tidak Ada Skeleton) --- */}
+                {/* Logic: Jika data masih kosong (awal load), filteredAchievements.length adalah 0.
+                    Untuk mencegah "No achievements found" muncul sekilas saat loading awal, 
+                    kita bisa cek apakah `achievements` utama juga kosong.
+                    Namun karena request adalah hapus logic, kita render apa adanya.
+                    
+                    Jika Anda ingin layar kosong saja saat loading (tanpa tulisan not found):
+                    tambahkan `if (achievements.length === 0 && searchQuery === "") return null;`
+                */}
+
+                {filteredAchievements.length === 0 ? (
+                    // Tampilkan pesan kosong hanya jika user sudah melakukan search/filter tapi hasil nihil
+                    // ATAU jika memang databasenya kosong (setelah load).
+                    // Saat first load, ini mungkin muncul sekilas 0.5 detik, lalu hilang diganti konten.
                     <motion.div variants={itemVariants} className="flex flex-col items-center justify-center py-20 text-center bg-zinc-50/50 dark:bg-zinc-900/20 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800">
                         <div className="w-12 h-12 bg-zinc-100 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-3 text-zinc-400">
                             <Search size={20} />
@@ -244,14 +233,13 @@ export default function AchievementsPage() {
                         </button>
                     </motion.div>
                 ) : (
-                    // CARD GRID
                     <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
                         <AnimatePresence mode="popLayout">
                             {filteredAchievements.map((item) => (
                                 <AchievementCard
                                     key={item.id}
                                     item={item}
-                                    variants={itemVariants} // Pass variant ke item
+                                    variants={itemVariants}
                                 />
                             ))}
                         </AnimatePresence>
@@ -263,12 +251,12 @@ export default function AchievementsPage() {
     );
 }
 
-// --- CARD COMPONENT ---
+// --- CARD COMPONENT (Sama seperti sebelumnya) ---
 const AchievementCard = memo(function AchievementCard({ item, variants }) {
     return (
         <motion.div
             layout
-            variants={variants} // Gunakan variants yang dipass dari parent
+            variants={variants}
             className="break-inside-avoid mb-4 group relative"
         >
             <a
@@ -279,7 +267,6 @@ const AchievementCard = memo(function AchievementCard({ item, variants }) {
                 ${!item.link_url ? 'cursor-default' : 'cursor-pointer hover:-translate-y-1'}`}
                 onClick={(e) => !item.link_url && e.preventDefault()}
             >
-                {/* IMAGE AREA */}
                 <div className="relative w-full bg-zinc-100 dark:bg-black/20 p-4">
                     {item.image_url ? (
                         <div className="relative w-full h-auto">
@@ -297,8 +284,6 @@ const AchievementCard = memo(function AchievementCard({ item, variants }) {
                             <Award size={40} strokeWidth={1.5} />
                         </div>
                     )}
-
-                    {/* External Link Icon */}
                     {item.link_url && (
                         <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
                             <div className="w-8 h-8 bg-white dark:bg-zinc-800 text-black dark:text-white rounded-full flex items-center justify-center shadow-lg border border-zinc-100 dark:border-zinc-700">
@@ -308,9 +293,7 @@ const AchievementCard = memo(function AchievementCard({ item, variants }) {
                     )}
                 </div>
 
-                {/* TEXT CONTENT */}
                 <div className="p-5">
-                    {/* Issuer Tag */}
                     <div className="flex items-center gap-2 mb-3">
                         <div className="px-2.5 py-1 rounded-md bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-100 dark:border-yellow-500/20 flex items-center gap-1.5">
                             {(item.issuer || item.category) && <Award size={12} className="text-yellow-600 dark:text-yellow-500" />}
@@ -330,7 +313,6 @@ const AchievementCard = memo(function AchievementCard({ item, variants }) {
                         </p>
                     )}
 
-                    {/* Footer Info */}
                     <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs mt-2">
                         <div className="flex flex-col">
                             <span className="text-zinc-400 text-[10px] uppercase tracking-wide">Issued</span>
@@ -338,8 +320,6 @@ const AchievementCard = memo(function AchievementCard({ item, variants }) {
                                 {item.date_issued || "N/A"}
                             </span>
                         </div>
-
-                        {/* Verified Badge */}
                         <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-500/20">
                             <CheckCircle2 size={12} />
                             <span className="text-[10px] font-bold">Verified</span>
