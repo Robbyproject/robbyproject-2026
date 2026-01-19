@@ -2,19 +2,24 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import {
-  LayoutDashboard, Globe, Smartphone, Monitor,
+  Globe, Smartphone, Monitor,
   GitCommit, Clock, ArrowUpRight, Activity
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { GitHubCalendar } from 'react-github-calendar';
+import dynamic from "next/dynamic"; // 1. Import dynamic
 
-// --- UTILS: FORMAT DATE (Optimized) ---
+// 2. Import Wrapper dengan SSR: false (Solusi anti-stuck loading)
+const CalendarWrapper = dynamic(() => import("@/components/CalendarWrapper"), {
+  ssr: false,
+  loading: () => <div className="h-[150px] w-full bg-zinc-900/50 animate-pulse rounded-xl" />,
+});
+
+// --- UTILS: FORMAT DATE ---
 const formatTimeAgo = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now - date) / 1000);
-
   if (diffInSeconds < 60) return "Just now";
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
@@ -29,10 +34,8 @@ export default function DashboardPage() {
   // --- FETCH DATA ---
   useEffect(() => {
     let isMounted = true;
-
     const fetchTraffic = async () => {
       try {
-        // OPTIMASI: Hanya select kolom yang dibutuhkan untuk hemat bandwidth
         const { data, error } = await supabase
           .from('traffic_logs')
           .select('id, device_type, page_path, created_at')
@@ -45,30 +48,22 @@ export default function DashboardPage() {
       } catch (err) {
         console.error("Error fetching traffic:", err);
       } finally {
-        if (isMounted) setTimeout(() => setLoading(false), 800);
+        if (isMounted) setLoading(false); // Hapus timeout agar lebih responsif
       }
     };
-
     fetchTraffic();
-
     return () => { isMounted = false; };
   }, []);
 
-  // --- PROCESSED STATS (Memoized) ---
+  // --- PROCESSED STATS ---
   const stats = useMemo(() => {
     const totalViews = logs.length;
-
-    // Hitung Device Type (Mobile vs Desktop)
     const devices = logs.reduce((acc, log) => {
       const type = log.device_type || 'Unknown';
       acc[type] = (acc[type] || 0) + 1;
       return acc;
     }, {});
 
-    const mobileCount = devices['Mobile'] || 0;
-    const desktopCount = devices['Desktop'] || 0;
-
-    // Hitung Top Pages
     const pages = logs.reduce((acc, log) => {
       const path = log.page_path || '/';
       acc[path] = (acc[path] || 0) + 1;
@@ -79,7 +74,12 @@ export default function DashboardPage() {
       .sort(([, a], [, b]) => b - a)
       .slice(0, 4);
 
-    return { totalViews, mobileCount, desktopCount, topPages };
+    return {
+      totalViews,
+      mobileCount: devices['Mobile'] || 0,
+      desktopCount: devices['Desktop'] || 0,
+      topPages
+    };
   }, [logs]);
 
   if (loading) return <DashboardSkeleton />;
@@ -98,10 +98,10 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* BENTO GRID CONTAINER */}
+      {/* BENTO GRID */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
 
-        {/* 1. TOTAL VIEWS (Main Card) */}
+        {/* 1. TOTAL VIEWS */}
         <BentoCard className="col-span-1 md:col-span-2 bg-zinc-900 text-white border-zinc-800">
           <div className="flex flex-col justify-between h-full relative z-10">
             <div className="flex items-center gap-2 text-zinc-400 mb-4">
@@ -114,7 +114,6 @@ export default function DashboardPage() {
               </h2>
               <p className="text-zinc-400 text-sm">All-time page views recorded.</p>
             </div>
-            {/* Abstract Decoration */}
             <div className="absolute right-0 top-0 w-32 h-32 bg-cyan-500/20 blur-[60px] rounded-full pointer-events-none" />
           </div>
         </BentoCard>
@@ -134,9 +133,6 @@ export default function DashboardPage() {
                   style={{ width: `${(stats.desktopCount / (stats.totalViews || 1)) * 100}%` }}
                 />
               </div>
-              <p className="text-[10px] text-zinc-500 mt-1">
-                {((stats.desktopCount / (stats.totalViews || 1)) * 100).toFixed(0)}% of traffic
-              </p>
             </div>
           </div>
         </BentoCard>
@@ -156,9 +152,6 @@ export default function DashboardPage() {
                   style={{ width: `${(stats.mobileCount / (stats.totalViews || 1)) * 100}%` }}
                 />
               </div>
-              <p className="text-[10px] text-zinc-500 mt-1">
-                {((stats.mobileCount / (stats.totalViews || 1)) * 100).toFixed(0)}% of traffic
-              </p>
             </div>
           </div>
         </BentoCard>
@@ -170,9 +163,7 @@ export default function DashboardPage() {
             <span className="text-xs font-bold uppercase tracking-widest">Recent Visits</span>
           </div>
           <div className="space-y-4 relative">
-            {/* Timeline Line */}
             <div className="absolute left-[5px] top-2 bottom-2 w-[1px] bg-zinc-200 dark:bg-zinc-800" />
-
             {logs.slice(0, 6).map((log) => (
               <div key={log.id} className="flex gap-3 items-start relative group">
                 <div className="w-2.5 h-2.5 rounded-full bg-cyan-500 mt-1.5 ring-4 ring-white dark:ring-[#121212] z-10 shrink-0" />
@@ -200,9 +191,9 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {stats.topPages.map(([path, count]) => (
-              <div key={path} className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-white/5 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800">
+              <div key={path} className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-white/5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
                 <span className="text-sm font-mono text-zinc-700 dark:text-zinc-300 truncate pr-4">{path}</span>
-                <span className="text-xs font-bold bg-white dark:bg-black px-2.5 py-1 rounded-md text-zinc-600 dark:text-zinc-400 shadow-sm border border-zinc-100 dark:border-zinc-800">
+                <span className="text-xs font-bold bg-white dark:bg-black px-2.5 py-1 rounded-md text-zinc-600 dark:text-zinc-400 border border-zinc-100 dark:border-zinc-800">
                   {count}
                 </span>
               </div>
@@ -210,7 +201,7 @@ export default function DashboardPage() {
           </div>
         </BentoCard>
 
-        {/* 6. GITHUB CONTRIBUTIONS */}
+        {/* 6. GITHUB CONTRIBUTIONS - BERSIH! */}
         <BentoCard className="col-span-1 md:col-span-3 lg:col-span-4 overflow-hidden min-h-[200px]">
           <div className="flex items-center gap-2 mb-4 text-zinc-500 dark:text-zinc-400">
             <GitCommit size={18} />
@@ -218,23 +209,10 @@ export default function DashboardPage() {
               Contributions (@{GITHUB_USERNAME})
             </span>
           </div>
-          {/* Wrapper untuk Horizontal Scroll yang Aman */}
-          <div className="w-full overflow-x-auto pb-2 custom-scrollbar">
-            <div className="min-w-[720px] lg:w-full flex lg:justify-center">
-              <GitHubCalendar
-                username={GITHUB_USERNAME}
-                colorScheme="dark"
-                fontSize={12}
-                blockSize={11}
-                blockMargin={4}
-                style={{ color: '#a1a1aa' }} // zinc-400
-                theme={{
-                  // Custom Theme matching Zinc/Emerald
-                  dark: ['#18181b', '#064e3b', '#059669', '#10b981', '#34d399'],
-                }}
-              />
-            </div>
-          </div>
+
+          {/* Komponen Kalender dipanggil bersih di sini */}
+          <CalendarWrapper username={GITHUB_USERNAME} />
+
         </BentoCard>
 
       </div>
@@ -242,7 +220,7 @@ export default function DashboardPage() {
   );
 }
 
-// --- COMPONENT: BENTO CARD (Reusable) ---
+// --- UTILS COMPONENTS TETAP SAMA ---
 function BentoCard({ children, className }) {
   return (
     <motion.div
@@ -250,45 +228,26 @@ function BentoCard({ children, className }) {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
       viewport={{ once: true, margin: "-50px" }}
-      className={`
-        group relative overflow-hidden rounded-3xl p-6
-        bg-white dark:bg-[#121212] 
-        border border-zinc-200 dark:border-zinc-800
-        hover:border-zinc-300 dark:hover:border-zinc-700
-        transition-all duration-300
-        shadow-sm hover:shadow-lg
-        ${className}
-      `}
+      className={`group relative overflow-hidden rounded-3xl p-6 bg-white dark:bg-[#121212] border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300 shadow-sm hover:shadow-lg ${className}`}
     >
-      {/* Subtle Gradient Overlay on Hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-zinc-50/50 to-transparent dark:from-white/5 dark:to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-      {/* Content Wrapper */}
-      <div className="relative z-10 h-full">
-        {children}
-      </div>
+      <div className="relative z-10 h-full">{children}</div>
     </motion.div>
   );
 }
 
-// --- COMPONENT: SKELETON LOADING (Matching Grid) ---
 function DashboardSkeleton() {
   return (
     <div className="w-full space-y-8 animate-pulse pt-4 pb-20">
-      {/* Header Skeleton */}
       <div className="space-y-3">
         <div className="h-8 w-48 bg-zinc-200 dark:bg-zinc-800 rounded-lg" />
         <div className="h-4 w-64 bg-zinc-200 dark:bg-zinc-800 rounded-lg opacity-60" />
       </div>
-
-      {/* Grid Skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <div className="col-span-1 md:col-span-2 h-48 bg-zinc-200 dark:bg-zinc-800 rounded-3xl" />
         <div className="col-span-1 h-48 bg-zinc-200 dark:bg-zinc-800 rounded-3xl" />
         <div className="col-span-1 h-48 bg-zinc-200 dark:bg-zinc-800 rounded-3xl" />
-
         <div className="col-span-1 lg:row-span-2 h-[350px] bg-zinc-200 dark:bg-zinc-800 rounded-3xl" />
-
         <div className="col-span-1 md:col-span-2 lg:col-span-3 h-40 bg-zinc-200 dark:bg-zinc-800 rounded-3xl" />
         <div className="col-span-full h-48 bg-zinc-200 dark:bg-zinc-800 rounded-3xl" />
       </div>
