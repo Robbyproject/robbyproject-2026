@@ -1,40 +1,59 @@
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation"; 
-import { useTheme } from "next-themes"; 
-import { useLanguage } from "@/components/providers/AppProviders"; 
-// 👇 Tambahkan 'LayoutDashboard' ke import
-import { 
-  BadgeCheck, Home, User, Briefcase, Trophy, Mail, Sun, Moon, Menu, X, Clapperboard, Heart, Zap, LayoutDashboard 
-} from "lucide-react"; 
+import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import { useLanguage } from "@/components/providers/AppProviders";
+import {
+  Home, User, Briefcase, Trophy, Mail, Sun, Moon, Menu,
+  Clapperboard, Heart, Zap, LayoutDashboard, ChevronDown, Gamepad2,
+  ShoppingBag, X, LogOut
+} from "lucide-react";
 import { scrollToId } from "@/utils/helpers";
 
 export default function Sidebar() {
-  const pathname = usePathname(); 
+  const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const { lang, toggleLang, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  const [openDropdown, setOpenDropdown] = useState(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Tutup sidebar mobile saat pindah halaman
   useEffect(() => {
     setIsMobileOpen(false);
+  }, [pathname]);
+
+  // Auto open dropdown jika berada di halaman anak
+  useEffect(() => {
+    if (pathname === "/anime" || pathname === "/waifu") {
+      setOpenDropdown("Entertainment");
+    }
   }, [pathname]);
 
   const navItems = [
     { name: t.nav_home, id: "hero", icon: Home, type: "scroll" },
     { name: t.nav_about, path: "/about", icon: User, type: "page" },
     { name: t.nav_services, path: "/services", icon: Zap, type: "page" },
-    { name: t.nav_projects, path: "/projects", icon: Briefcase, type: "page" }, 
+    { name: t.nav_projects, path: "/projects", icon: Briefcase, type: "page" },
     { name: t.nav_achievements, path: "/achievements", icon: Trophy, type: "page" },
-    { name: t.nav_anime, path: "/anime", icon: Clapperboard, type: "page" },
-    { name: t.nav_waifu, path: "/waifu", icon: Heart, type: "page" },
-    // 👇 MENU DASHBOARD BARU (Di atas Contact)
+    { name: "Store", path: "/store", icon: ShoppingBag, type: "page" },
+    {
+      name: t.nav_entertainment || "Entertainment",
+      icon: Gamepad2,
+      type: "dropdown",
+      id: "Entertainment",
+      children: [
+        { name: t.nav_anime, path: "/anime", icon: Clapperboard, type: "page" },
+        { name: t.nav_waifu, path: "/waifu", icon: Heart, type: "page" },
+      ]
+    },
     { name: t.nav_dashboard, path: "/dashboard", icon: LayoutDashboard, type: "page" },
     { name: t.nav_contact, path: "/contact", icon: Mail, type: "page" },
   ];
@@ -42,137 +61,187 @@ export default function Sidebar() {
   const handleNavigation = (item) => {
     if (item.type === "page") {
       router.push(item.path);
-    } else {
+    } else if (item.type === "scroll") {
       if (pathname === "/") {
         scrollToId(item.id);
       } else {
         router.push(`/#${item.id}`);
       }
+    } else if (item.type === "dropdown") {
+      setOpenDropdown(openDropdown === item.id ? null : item.id);
+      return;
     }
-    setIsMobileOpen(false);
+    // Jangan tutup mobile menu langsung jika klik dropdown, user mungkin mau klik anaknya
+    if (item.type !== "dropdown") setIsMobileOpen(false);
   };
-
-  const ToggleControls = ({ className = "" }) => (
-    <div className={`flex gap-2 ${className}`}>
-        <div className="flex bg-zinc-200 dark:bg-zinc-900 rounded-full p-1 border border-zinc-300 dark:border-white/5">
-            <button onClick={() => toggleLang('en')} className={`px-2 py-1 text-[10px] rounded-full font-bold transition-all ${lang === 'en' ? 'bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm' : 'text-zinc-500'}`}>EN</button>
-            <button onClick={() => toggleLang('id')} className={`px-2 py-1 text-[10px] rounded-full font-bold transition-all ${lang === 'id' ? 'bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm' : 'text-zinc-500'}`}>ID</button>
-        </div>
-        <div className="flex bg-zinc-200 dark:bg-zinc-900 rounded-full p-1 border border-zinc-300 dark:border-white/5">
-            <button onClick={() => setTheme('light')} className={`p-1 rounded-full transition-all ${theme === 'light' ? 'bg-white text-yellow-500 shadow-sm' : 'text-zinc-500'}`}><Sun size={12}/></button>
-            <button onClick={() => setTheme('dark')} className={`p-1 rounded-full transition-all ${theme === 'dark' ? 'bg-zinc-700 text-white shadow-sm' : 'text-zinc-500'}`}><Moon size={12}/></button>
-        </div>
-    </div>
-  );
 
   if (!mounted) return null;
 
   return (
     <>
-      <style jsx global>{`
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
-
-      {/* --- HEADER MOBILE --- */}
-      {!isMobileOpen && (
-        <div className="lg:hidden fixed top-0 left-0 right-0 z-[100] px-4 py-3 flex justify-between items-center bg-zinc-50/90 dark:bg-[#0a0a0a]/90 backdrop-blur-md border-b border-zinc-200 dark:border-white/5 transition-all">
-            <div className="flex items-center gap-3">
-                <div className="relative w-8 h-8 rounded-full overflow-hidden border border-zinc-300 dark:border-white/20 shadow-sm">
-                    <Image src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa1.webp" alt="Profile" fill className="object-cover" />
-                </div>
-                <div className="flex flex-col hidden sm:flex">
-                    <span className="font-bold text-xs text-zinc-900 dark:text-white leading-none">Robby Fabian</span>
-                </div>
-            </div>
-            <div className="flex items-center gap-2">
-                <div className="animate-in fade-in zoom-in duration-300 mr-1">
-                    <ToggleControls />
-                </div>
-                <button onClick={() => setIsMobileOpen(true)} className="p-2 rounded-lg bg-zinc-200 dark:bg-white/10 text-black dark:text-white hover:bg-zinc-300 dark:hover:bg-white/20 transition-colors active:scale-95">
-                    <Menu size={18} />
-                </button>
-            </div>
+      {/* --- MOBILE HEADER / TOGGLE --- */}
+      {/* Hanya muncul di layar kecil */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md border-b border-zinc-200 dark:border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-zinc-100">
+            <Image src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa1.webp" alt="Profile" fill className="object-cover" />
+          </div>
+          <span className="font-semibold text-sm">Robby Fabian</span>
         </div>
-      )}
+        <button onClick={() => setIsMobileOpen(true)} className="p-2 text-zinc-600 dark:text-zinc-400">
+          <Menu size={20} />
+        </button>
+      </div>
 
-      {/* --- OVERLAY --- */}
+      {/* --- OVERLAY MOBILE --- */}
       {isMobileOpen && (
-        <div onClick={() => setIsMobileOpen(false)} className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm lg:hidden"></div>
+        <div
+          onClick={() => setIsMobileOpen(false)}
+          className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm lg:hidden animate-in fade-in duration-200"
+        />
       )}
 
-      {/* --- SIDEBAR --- */}
+      {/* --- SIDEBAR CONTAINER --- */}
       <aside className={`
-          lg:sticky lg:top-0 lg:left-0 lg:h-screen lg:translate-x-0 lg:w-72 lg:flex
-          fixed top-0 left-0 h-screen w-72 flex flex-col 
-          z-[95] transition-transform duration-300 ease-in-out
+          fixed top-0 left-0 z-[70] h-full w-64 
+          bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-xl
+          border-r border-zinc-200 dark:border-white/5
+          transform transition-transform duration-300 ease-in-out
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-          bg-zinc-50 dark:bg-[#0a0a0a] 
-          border-r border-zinc-200 dark:border-white/5 
-          overflow-y-auto scrollbar-hide
+          lg:translate-x-0
+          flex flex-col
       `}>
-        
-        <div className="lg:hidden absolute top-4 right-4 z-50">
-            <button onClick={() => setIsMobileOpen(false)} className="p-2 rounded-lg bg-zinc-200 dark:bg-white/10 text-black dark:text-white hover:bg-zinc-300 dark:hover:bg-white/20 transition-colors active:scale-95">
-                <X size={18} />
+
+        {/* 1. PROFILE HEADER (Minimalist) */}
+        <div className="p-6 flex flex-col items-center border-b border-zinc-100 dark:border-white/5">
+          <div className="relative w-20 h-20 mb-4 rounded-full p-1 border border-zinc-200 dark:border-zinc-800">
+            <div className="relative w-full h-full rounded-full overflow-hidden">
+              <Image
+                src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa1.webp"
+                alt="Profile"
+                fill
+                className="object-cover hover:scale-110 transition-transform duration-500"
+              />
+            </div>
+          </div>
+
+          <h2 className="text-lg font-bold text-zinc-900 dark:text-white tracking-tight">Robby Fabian</h2>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Graphic Designer | IT Enthusiast</p>
+
+          {/* Controls (Theme & Lang) */}
+          <div className="flex items-center gap-3 mt-4">
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+            >
+              {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
             </button>
-        </div>
 
-        <div className="flex flex-col items-center text-center p-8 pb-6 flex-shrink-0 mt-8 lg:mt-0">
-          <div className="relative w-24 h-24 mb-4 group cursor-pointer">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-red-500 via-yellow-500 to-green-500 p-[3px] animate-[spin_4s_linear_infinite]">
-                <div className="w-full h-full bg-white dark:bg-[#0a0a0a] rounded-full"></div>
-            </div>
-            <div className="absolute inset-[3px] rounded-full overflow-hidden bg-white dark:bg-[#0a0a0a] border-2 border-transparent">
-                <Image src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa1.webp" alt="Profile" fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
-            </div>
-          </div>
+            <div className="w-[1px] h-4 bg-zinc-200 dark:bg-zinc-800"></div>
 
-          <div className="flex items-center gap-1.5 justify-center mb-1">
-              <h2 className="text-xl font-bold text-zinc-800 dark:text-white">Robby Fabian</h2>
-              <BadgeCheck size={20} className="text-blue-500 fill-blue-500/10 animate-pulse" strokeWidth={2.5} />
-          </div>
-          <p className="text-sm text-zinc-500 mb-5">@robbyfabian</p>
-
-          <div className="flex justify-center w-full">
-             <ToggleControls className="scale-110" />
+            {/* Lang Toggle */}
+            <button
+              onClick={() => toggleLang(lang === 'en' ? 'id' : 'en')}
+              className="text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors"
+            >
+              {lang === 'en' ? 'EN' : 'ID'}
+            </button>
           </div>
         </div>
 
-        <div className="h-[1px] bg-zinc-200 dark:bg-white/5 w-full mb-4 flex-shrink-0"></div>
-
-        <nav className="flex-1 px-4 space-y-2 pb-4">
-          {navItems.map((item) => {
+        {/* 2. NAVIGATION MENU */}
+        <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1 custom-scrollbar">
+          {navItems.map((item, index) => {
             const isActive = item.type === "page" ? pathname === item.path : false;
+            const isDropdownOpen = openDropdown === item.id;
+
+            // --- RENDER DROPDOWN ---
+            if (item.type === "dropdown") {
+              const isChildActive = item.children.some(child => pathname === child.path);
+              return (
+                <div key={index} className="flex flex-col">
+                  <button
+                    onClick={() => handleNavigation(item)}
+                    className={`
+                                    w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200
+                                    ${(isChildActive || isDropdownOpen)
+                        ? "text-zinc-900 dark:text-white bg-zinc-100 dark:bg-zinc-900"
+                        : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-white/5"
+                      }
+                                `}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon size={18} strokeWidth={2} />
+                      <span>{item.name}</span>
+                    </div>
+                    <ChevronDown size={14} className={`transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {/* Dropdown Items */}
+                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isDropdownOpen ? "max-h-40 opacity-100 mt-1" : "max-h-0 opacity-0"}`}>
+                    <div className="flex flex-col gap-1 pl-4 ml-4 border-l border-zinc-200 dark:border-zinc-800">
+                      {item.children.map((subItem) => (
+                        <button
+                          key={subItem.path}
+                          onClick={() => handleNavigation(subItem)}
+                          className={`
+                                                w-full flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-md transition-all
+                                                ${pathname === subItem.path
+                              ? "text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-900/10"
+                              : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                            }
+                                            `}
+                        >
+                          <subItem.icon size={14} />
+                          {subItem.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            // --- RENDER REGULAR MENU ---
             return (
               <button
-                key={item.name}
+                key={index}
                 onClick={() => handleNavigation(item)}
                 className={`
-                    group w-full flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-300 ease-out relative overflow-hidden flex-shrink-0
-                    ${isActive 
-                        ? "bg-zinc-200 dark:bg-white/10 text-black dark:text-white shadow-sm" 
-                        : "text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5"
-                    }
-                `}
+                            group w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 relative
+                            ${isActive
+                    ? "text-zinc-900 dark:text-white bg-zinc-100 dark:bg-zinc-900"
+                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-white/5"
+                  }
+                        `}
               >
-                {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-cyan-500 rounded-r-full shadow-[0_0_10px_rgba(6,182,212,0.6)]"></span>}
-                <div className={`relative z-10 transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-125 group-hover:-rotate-12"}`}>
-                    <item.icon size={18} className={`transition-colors duration-300 ${isActive ? "text-cyan-600 dark:text-cyan-400" : "group-hover:text-cyan-600 dark:group-hover:text-cyan-400"}`} />
-                </div>
-                <span className="relative z-10 transition-transform duration-300 group-hover:translate-x-1">{item.name}</span>
+                {/* Active Indicator (Small Dot) */}
+                {isActive && <div className="absolute left-0 w-1 h-5 bg-cyan-500 rounded-r-full" />}
+
+                <item.icon size={18} strokeWidth={2} className={`transition-transform duration-300 ${isActive ? "scale-105" : "group-hover:scale-105"}`} />
+                <span>{item.name}</span>
               </button>
             );
           })}
-        </nav>
+        </div>
 
-        <div className="p-6 mt-auto bg-zinc-50 dark:bg-[#0a0a0a] flex-shrink-0"> 
-           <div className="text-center">
-              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold tracking-wider">{t.copyright} &copy; 2025</p>
-              <p className="text-[10px] text-zinc-500 dark:text-zinc-600 mt-1">{t.rights}</p>
-           </div>
+        {/* 3. FOOTER */}
+        <div className="p-4 border-t border-zinc-100 dark:border-white/5">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-white/5">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Available for work</span>
+          </div>
         </div>
       </aside>
+
+      {/* --- CSS UTILS (Optional if configured in global css) --- */}
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(150, 150, 150, 0.2); border-radius: 10px; }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: rgba(150, 150, 150, 0.4); }
+      `}</style>
     </>
   );
 }

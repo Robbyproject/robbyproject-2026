@@ -1,139 +1,257 @@
 "use client";
-import { useState, useEffect } from "react"; 
-import Sidebar from "@/components/layout/Sidebar";
-import { Briefcase, GraduationCap, Download, FileText } from "lucide-react";
-import Image from "next/image";
-import { useLanguage } from "@/components/providers/AppProviders";
-import { PDFDownloadLink } from "@react-pdf/renderer";
-import ResumePDF from "@/components/pdf/ResumePDF";
 
-// ... (Data careerList & educationList TETAP SAMA, tidak perlu diubah) ...
-const careerList = [
-  { role: "IT Support Intern", company: "Disinfolahtaau", location: "Jakarta, Indonesia 🇮🇩", period: "Jul 2024 - Des 2024", type: "internship", mode: "WFO", logo: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Disinfo.jpg" },
-  { role: "UI/UX Designer Intern", company: "Disinfolahtaau", location: "Jakarta, Indonesia 🇮🇩", period: "Jul 2024 - Des 2024", type: "internship", mode: "WFO", logo: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Disinfo.jpg" },
-];
+import { useRef, useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { supabase } from "@/lib/supabase";
+import {
+    Mail, MapPin, Briefcase,
+    GraduationCap, User, Download,
+    Loader2
+} from "lucide-react";
+import { SiGithub, SiLinkedin, SiInstagram } from "react-icons/si";
 
-const educationList = [
-  { degree: "Computer Science", school: "Cakrawala University", level: "Bachelor Degree", period: "2025 - Present", location: "Jakarta, Indonesia 🇮🇩", logo: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Cakrawala.png" },
-  { degree: "Software Engineering", school: "SMK Prestasi Prima", level: "High School", period: "2022 - 2025", location: "Jakarta, Indonesia 🇮🇩", logo: "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Prestasi-prima.png" },
-];
+// Variabel Animasi
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+};
 
 export default function AboutPage() {
-  const { t } = useLanguage();
-  const [isClient, setIsClient] = useState(false);
+    // STATE DATA
+    const [educationList, setEducationList] = useState([]);
+    const [experienceList, setExperienceList] = useState([]);
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+    // STATE LOADING
+    const [loadingEdu, setLoadingEdu] = useState(true);
+    const [loadingExp, setLoadingExp] = useState(true);
 
-  return (
-    // Tambahkan bg-zinc-50 dark:bg-[#0a0a0a] agar background konsisten
-    <div className="min-h-screen font-sans transition-colors duration-300 bg-zinc-50 dark:bg-[#0a0a0a]">
-      <div className="flex w-full">
-        <Sidebar />
+    useEffect(() => {
 
-        {/* 👇 UPDATE MAIN DISINI 👇 */}
-        {/* 1. pt-20 diganti pt-28 (agar tidak ketutup header mobile) */}
-        {/* 2. lg:pl-72 DIHAPUS */}
-        <main className="flex-1 w-full min-h-screen pt-28 lg:pt-0">
-          
-          {/* 👇 PERBAIKAN GRID DISINI 👇 */}
-          {/* Ganti 'max-w-5xl' jadi 'max-w-6xl' */}
-          {/* Ganti 'px-6' jadi 'px-4' */}
-          <div className="max-w-6xl mx-auto px-4 py-8 lg:py-10">
-             
-             {/* HEADER */}
-             <div className="mb-8 border-b border-zinc-200 dark:border-white/5 pb-8 transition-colors">
-                <h1 className="text-3xl font-bold text-zinc-900 dark:text-white mb-2 transition-colors">{t.about_title}</h1>
-                <p className="text-zinc-500 dark:text-zinc-400">{t.about_subtitle}</p>
-             </div>
+        // 1. Fetch Education (Sesuai kolom tabel kamu: school_name, major, years)
+        async function getEducation() {
+            try {
+                const { data, error } = await supabase
+                    .from('education') // Pastikan nama tabel di Supabase 'education' (kecil semua)
+                    .select('*')
+                    .order('id', { ascending: false });
 
-             {/* INTRO TEXT */}
-             <div className="space-y-6 text-zinc-600 dark:text-zinc-300 leading-relaxed text-[15px] transition-colors">
-                <p>{t.about_intro_1}</p>
-                <p>{t.about_intro_2}</p>
-             </div>
+                if (error) throw error;
+                setEducationList(data || []);
+            } catch (error) {
+                console.error("Gagal ambil education:", error.message);
+            } finally {
+                setLoadingEdu(false);
+            }
+        }
 
-             <div className="w-full h-[1px] bg-zinc-200 dark:bg-white/5 my-10 transition-colors"></div>
+        // 2. Fetch Experience (Tabel baru)
+        async function getExperience() {
+            try {
+                const { data, error } = await supabase
+                    .from('experience')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('id', { ascending: false });
 
-             {/* CAREER SECTION */}
-             <div className="mb-12">
-                <div className="flex items-center gap-2 mb-6">
-                    <Briefcase size={20} className="text-zinc-400" />
-                    <h2 className="text-xl font-bold text-zinc-900 dark:text-white transition-colors">{t.about_career}</h2>
-                </div>
-                <div className="flex flex-col gap-4"> 
-                    {careerList.map((job, index) => (
-                        <div key={index} className="bg-white dark:bg-[#18181b] border border-zinc-200 dark:border-white/5 rounded-2xl p-6 flex flex-col md:flex-row gap-6 hover:border-zinc-300 dark:hover:border-white/10 transition-all shadow-sm dark:shadow-none">
-                            <div className="relative w-16 h-16 bg-white rounded-xl overflow-hidden shrink-0 border border-zinc-200 dark:border-white/5 p-2 flex items-center justify-center">
-                                <Image src={job.logo} alt="Company Logo" fill className="object-contain p-1" />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-lg font-bold text-zinc-900 dark:text-white transition-colors">{job.role}</h3>
-                                <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-2">{job.company} • {job.location}</p>
-                                <div className="flex flex-wrap gap-3 text-xs text-zinc-500 font-mono mb-4">
-                                    <span>{job.period}</span>•<span>{job.type}</span>•<span>{job.mode}</span>
+                if (error) throw error;
+                setExperienceList(data || []);
+            } catch (error) {
+                console.error("Gagal ambil experience:", error.message);
+            } finally {
+                setLoadingExp(false);
+            }
+        }
+
+        getEducation();
+        getExperience();
+    }, []);
+
+    return (
+        <div className="w-full">
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="w-full flex flex-col gap-10"
+            >
+
+                {/* HEADER SECTION */}
+                <motion.div variants={itemVariants} className="space-y-2 border-b border-white/5 pb-8">
+                    <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight flex items-center gap-3">
+                        <User className="text-zinc-500" size={32} /> About Me
+                    </h1>
+                    <p className="text-zinc-500 max-w-2xl text-lg">
+                        A glimpse into my journey, experience, and what drives me.
+                    </p>
+                </motion.div>
+
+                {/* MAIN GRID LAYOUT */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
+
+                    {/* SIDEBAR (Profile Picture & Quick Info) */}
+                    <motion.div variants={itemVariants} className="lg:col-span-4 space-y-6">
+                        <div className="rounded-[2rem] border border-white/10 bg-[#111] p-2 overflow-hidden sticky top-24">
+                            <div className="relative aspect-square rounded-[1.5rem] overflow-hidden bg-zinc-800">
+                                {/* Ganti URL foto sesuai bucket Supabase kamu */}
+                                <img
+                                    src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa1.webp"
+                                    alt="Profile"
+                                    className="object-cover w-full h-full hover:scale-105 transition-transform duration-700"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+                                <div className="absolute bottom-4 left-4 right-4">
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/20 border border-green-500/30 backdrop-blur-md text-green-400 text-xs font-medium mb-2">
+                                        <span className="relative flex h-2 w-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                        </span>
+                                        Open to Work
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white">Robby Fabian</h3>
+                                    <p className="text-zinc-300 text-sm">Graphic Designer | IT Enthusias</p>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
-             </div>
 
-             {/* EDUCATION & DOWNLOAD SECTION */}
-             <div>
-                <div className="flex items-center gap-2 mb-6">
-                    <GraduationCap size={20} className="text-zinc-400" />
-                    <h2 className="text-xl font-bold text-zinc-900 dark:text-white transition-colors">{t.about_edu}</h2>
-                </div>
-                
-                {/* TOMBOL DOWNLOAD CV ATS */}
-                <div className="flex justify-end mb-6">
-                    {isClient ? (
-                        <PDFDownloadLink 
-                            document={<ResumePDF />} 
-                            fileName="Robby_Fabian_Resume.pdf"
-                            className="flex items-center gap-2 px-5 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-black border border-zinc-200 dark:border-white/10 rounded-xl text-xs font-bold hover:opacity-90 transition-all shadow-lg hover:shadow-xl active:scale-95"
-                        >
-                            {({ loading }) => (
-                                <>
-                                    {loading ? (
-                                        "Generating..."
-                                    ) : (
-                                        <>
-                                            <FileText size={16} /> Download ATS CV
-                                        </>
-                                    )}
-                                </>
-                            )}
-                        </PDFDownloadLink>
-                    ) : (
-                        <button className="flex items-center gap-2 px-5 py-2.5 bg-zinc-200 dark:bg-white/10 text-zinc-500 rounded-xl text-xs font-bold cursor-wait">
-                            <FileText size={16} /> Loading CV...
-                        </button>
-                    )}
-                </div>
+                            <div className="p-4 space-y-4">
+                                <div className="flex items-center gap-2 text-zinc-500 text-sm">
+                                    <MapPin size={16} /> Jakarta, Indonesia
+                                </div>
+                                <div className="flex items-center gap-2 text-zinc-500 text-sm">
+                                    <Mail size={16} /> robbyfabian20@gmail.com
+                                </div>
 
-                <div className="flex flex-col gap-4">
-                    {educationList.map((edu, index) => (
-                        <div key={index} className="bg-white dark:bg-[#18181b] border border-zinc-200 dark:border-white/5 rounded-2xl p-6 flex flex-col md:flex-row gap-6 hover:border-zinc-300 dark:hover:border-white/10 transition-all relative overflow-hidden shadow-sm dark:shadow-none">
-                            <div className="relative w-16 h-16 bg-white rounded-xl overflow-hidden shrink-0 border border-zinc-200 dark:border-white/5 p-2 flex items-center justify-center">
-                                <Image src={edu.logo} alt="School Logo" fill className="object-contain p-1" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-zinc-900 dark:text-white transition-colors">{edu.degree}</h3>
-                                <p className="text-zinc-500 dark:text-zinc-400 text-sm">{edu.school} • {edu.level}</p>
-                                <p className="text-xs text-zinc-500 font-mono mt-2">{edu.period} • {edu.location}</p>
+                                <div className="flex gap-2 pt-2">
+                                    <Link href="https://github.com/Robbyproject" className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors">
+                                        <SiGithub size={18} />
+                                    </Link>
+                                    <Link href="https://linkedin.com/in/robby-fabian" className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-blue-400 hover:bg-blue-500/10 transition-colors">
+                                        <SiLinkedin size={18} />
+                                    </Link>
+                                    <Link href="https://instagram.com/mikookatsunagi" className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-pink-400 hover:bg-pink-500/10 transition-colors">
+                                        <SiInstagram size={18} />
+                                    </Link>
+                                </div>
+
+                                <button className="w-full py-3 rounded-xl bg-white text-black font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-colors">
+                                    <Download size={18} /> Download CV
+                                </button>
                             </div>
                         </div>
-                    ))}
-                </div>
-             </div>
-             
+                    </motion.div>
 
-          </div>
-        </main>
-      </div>
-    </div>
-  );
+                    {/* MAIN CONTENT */}
+                    <motion.div variants={itemVariants} className="lg:col-span-8 space-y-8">
+
+                        {/* Biography - UPDATED HERE */}
+                        <div className="rounded-[2.5rem] border border-white/10 bg-[#111] p-8 md:p-10">
+                            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                                <span className="text-blue-500">#</span> Biography
+                            </h2>
+                            <div className="prose prose-invert prose-zinc max-w-none text-zinc-400 leading-relaxed space-y-4">
+                                <p>
+                                    Hello, I'm <strong>Robby Fabian</strong>. I started my journey as a graphic designer, obsessed with pixels and layouts. Over time, my curiosity led me to the world of programming, where I found the perfect blend of logic and creativity.
+                                </p>
+                                <p>
+                                    Currently, I focus on creating and developing applications or websites where I also combine minimalist and elegant designs in websites or applications so that they are visually appealing to clients.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* EXPERIENCE SECTION (DYNAMIC DARI SUPABASE) */}
+                        <div className="rounded-[2.5rem] border border-white/10 bg-[#111] p-8 md:p-10">
+                            <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
+                                <Briefcase size={24} className="text-zinc-500" /> Work Experience
+                            </h2>
+
+                            <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-zinc-800 before:to-transparent">
+                                {loadingExp ? (
+                                    // SKELETON LOADING EXPERIENCE
+                                    [1, 2].map((_, i) => (
+                                        <div key={i} className="ml-10 space-y-3 animate-pulse">
+                                            <div className="h-6 w-1/3 bg-zinc-800 rounded"></div>
+                                            <div className="h-4 w-1/4 bg-zinc-800 rounded"></div>
+                                            <div className="h-16 w-full bg-zinc-800/50 rounded"></div>
+                                        </div>
+                                    ))
+                                ) : experienceList.length > 0 ? (
+                                    experienceList.map((job) => (
+                                        <div key={job.id} className="relative flex items-start gap-6 group">
+                                            {/* Dot Indicator */}
+                                            <div className="absolute left-0 top-1 mt-1 ml-3.5 h-3 w-3 rounded-full border-2 border-[#111] bg-zinc-600 group-hover:bg-blue-500 transition-colors z-10" />
+
+                                            <div className="ml-10 w-full">
+                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+                                                    <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">
+                                                        {job.role}
+                                                    </h3>
+                                                    <span className="text-xs font-mono text-zinc-500 bg-white/5 px-2 py-1 rounded border border-white/5">
+                                                        {job.period}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm font-medium text-zinc-400 mb-2">{job.company}</p>
+                                                <p className="text-sm text-zinc-500 leading-relaxed">
+                                                    {job.description}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="ml-10 text-zinc-500 italic">No work experience added yet.</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* EDUCATION SECTION (DYNAMIC DARI SUPABASE) */}
+                        <div className="rounded-[2.5rem] border border-white/10 bg-[#111] p-8 md:p-10">
+                            <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
+                                <GraduationCap size={24} className="text-zinc-500" /> Education
+                            </h2>
+
+                            <div className="grid grid-cols-1 gap-4">
+                                {loadingEdu ? (
+                                    // SKELETON LOADING EDUCATION
+                                    [1].map((_, i) => (
+                                        <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/5 animate-pulse">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="h-5 w-1/3 bg-zinc-700 rounded mb-2"></div>
+                                                <div className="h-4 w-16 bg-zinc-700 rounded"></div>
+                                            </div>
+                                            <div className="h-4 w-1/4 bg-zinc-800 rounded"></div>
+                                        </div>
+                                    ))
+                                ) : educationList.length > 0 ? (
+                                    educationList.map((edu) => (
+                                        <div key={edu.id} className="group p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-white/20 transition-all">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    {/* Mapping sesuai kolom tabel kamu: major & school_name */}
+                                                    <h3 className="text-white font-bold">{edu.major}</h3>
+                                                    <p className="text-zinc-400 text-sm">{edu.school_name}</p>
+                                                </div>
+                                                {/* Mapping sesuai kolom tabel kamu: years */}
+                                                <span className="text-xs font-mono text-zinc-500 bg-[#1a1a1a] px-2 py-1 rounded border border-white/5">
+                                                    {edu.years}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-zinc-500 text-sm italic">No education details added yet.</p>
+                                )}
+                            </div>
+                        </div>
+
+                    </motion.div>
+                </div>
+
+            </motion.div>
+        </div>
+    );
 }

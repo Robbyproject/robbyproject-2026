@@ -1,189 +1,274 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
-import Sidebar from "@/components/layout/Sidebar";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useLanguage } from "@/components/providers/AppProviders";
-import { motion } from "framer-motion";
-import { Image as ImageIcon, Sparkles, Play } from "lucide-react"; // Heart dihapus dari sini
+import {
+    Heart,
+    Search,
+    Sparkles,
+    PlayCircle,
+    ListFilter,
+    ChevronDown,
+    Check
+} from "lucide-react";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
-// --- KOMPONEN SMART VIDEO ---
-const SmartVideo = ({ src }) => {
-    const videoRef = useRef(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
+export default function WaifuPage() {
+    const { t } = useLanguage();
+    const [waifuList, setWaifuList] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // --- STATE PENCARIAN & FILTER ---
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedSource, setSelectedSource] = useState("All");
+
+    // State Dropdown
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const filterRef = useRef(null);
 
     useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768);
-        checkMobile();
-        window.addEventListener("resize", checkMobile);
-        return () => window.removeEventListener("resize", checkMobile);
+        fetchWaifu();
     }, []);
 
+    // Logic Click Outside Dropdown
     useEffect(() => {
-        if (!isMobile || !videoRef.current) return; 
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    videoRef.current.play().catch(() => {}); 
-                    setIsPlaying(true);
-                } else {
-                    videoRef.current.pause();
-                    setIsPlaying(false);
-                }
-            },
-            { threshold: 0.6 } 
-        );
-        observer.observe(videoRef.current);
-        return () => observer.disconnect();
-    }, [isMobile]);
-
-    const handleMouseEnter = () => {
-        if (!isMobile && videoRef.current) {
-            videoRef.current.play().catch(() => {});
-            setIsPlaying(true);
-        }
-    };
-
-    const handleMouseLeave = () => {
-        if (!isMobile && videoRef.current) {
-            videoRef.current.pause();
-            setIsPlaying(false);
-        }
-    };
-
-    const togglePlay = () => {
-        if (videoRef.current) {
-            if (isPlaying) {
-                videoRef.current.pause();
-                setIsPlaying(false);
-            } else {
-                videoRef.current.play().catch(() => {});
-                setIsPlaying(true);
+        function handleClickOutside(event) {
+            if (filterRef.current && !filterRef.current.contains(event.target)) {
+                setIsFilterOpen(false);
             }
         }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [filterRef]);
+
+    const fetchWaifu = async () => {
+        setLoading(true);
+        try {
+            const { data } = await supabase
+                .from('waifu_list')
+                .select('*')
+                .order('name', { ascending: true });
+
+            if (data) setWaifuList(data);
+        } catch (err) {
+            console.error("Error fetching waifus:", err);
+        } finally {
+            setLoading(false);
+        }
     };
 
+    // --- LOGIC: AMBIL SOURCE UNIK ---
+    const sources = useMemo(() => {
+        const uniqueSources = new Set(waifuList.map(item => item.anime_source).filter(Boolean));
+        return ["All", ...Array.from(uniqueSources).sort()];
+    }, [waifuList]);
+
+    // --- LOGIC: FILTER ITEM ---
+    const filteredWaifu = useMemo(() => {
+        return waifuList.filter((item) => {
+            const matchesSearch = item.name?.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesSource = selectedSource === "All" || item.anime_source === selectedSource;
+            return matchesSearch && matchesSource;
+        });
+    }, [waifuList, searchQuery, selectedSource]);
+
     return (
-        <div className="relative w-full h-full cursor-pointer group" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={togglePlay}>
-            <video ref={videoRef} src={src} loop muted playsInline preload="metadata" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-            {!isPlaying && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[2px] transition-opacity duration-300">
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center border border-white/30 text-white shadow-lg backdrop-blur-sm">
-                        <Play size={20} fill="currentColor" />
+        <div className="w-full space-y-8 min-h-screen pb-20 pt-4">
+
+            {/* --- HEADER SECTION --- */}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-zinc-200 dark:border-white/5 pb-8">
+                <div className="space-y-2 max-w-lg">
+                    <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 dark:text-white tracking-tight flex items-center gap-3">
+                        <Heart className="text-rose-500 fill-rose-500" size={32} />
+                        {t?.waifu_title || "Waifu Collection"}
+                    </h1>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">
+                        {t?.waifu_subtitle || "A curated gallery of favorite characters. Muse, inspiration, and aesthetic appreciation."}
+                    </p>
+                </div>
+
+                {/* --- CONTROLS (SEARCH & FILTER) --- */}
+                <div className="flex flex-row items-center gap-2 w-full lg:w-auto relative z-20">
+
+                    {/* 1. Search Bar */}
+                    <div className="relative flex-1 group min-w-[200px]">
+                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                            <Search size={14} className="text-zinc-400 group-focus-within:text-rose-500 transition-colors" />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Search character..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full h-10 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:border-rose-500/50 rounded-xl pl-9 pr-3 text-sm outline-none transition-all placeholder:text-zinc-400 dark:text-white"
+                        />
                     </div>
+
+                    {/* 2. Dropdown Filter Button */}
+                    <div className="relative shrink-0" ref={filterRef}>
+                        <button
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            className={`flex items-center justify-between gap-2 h-10 px-3 md:px-4 rounded-xl border text-sm font-medium transition-all w-auto
+                        ${isFilterOpen || selectedSource !== "All"
+                                    ? "bg-white dark:bg-zinc-800 border-rose-500/50 text-rose-600 dark:text-rose-400 shadow-sm"
+                                    : "bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                                }`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <ListFilter size={16} />
+                                <span className="hidden xs:inline truncate max-w-[80px] md:max-w-none">
+                                    {selectedSource === "All" ? "Source" : selectedSource}
+                                </span>
+                            </div>
+                            <ChevronDown size={14} className={`transition-transform duration-200 ${isFilterOpen ? "rotate-180" : ""}`} />
+                        </button>
+
+                        <AnimatePresence>
+                            {isFilterOpen && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                                    transition={{ duration: 0.2, ease: "easeOut" }}
+                                    className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#151515] border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden z-50 p-1"
+                                >
+                                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                                        <div className="px-2 py-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                                            Anime Source
+                                        </div>
+                                        {sources.map((source) => (
+                                            <button
+                                                key={source}
+                                                onClick={() => {
+                                                    setSelectedSource(source);
+                                                    setIsFilterOpen(false);
+                                                }}
+                                                className={`w-full flex items-center justify-between px-2 py-2 text-sm rounded-lg transition-colors text-left
+                                            ${selectedSource === source
+                                                        ? "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 font-medium"
+                                                        : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                                    }`}
+                                            >
+                                                <span className="truncate">{source}</span>
+                                                {selectedSource === source && <Check size={14} className="shrink-0" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </div>
+            </div>
+
+            {/* --- GRID CONTENT (MASONRY) --- */}
+            {loading ? (
+                // SKELETON LOADING
+                <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+                    {[...Array(8)].map((_, i) => (
+                        <div key={i} className="break-inside-avoid mb-4">
+                            <div className={`w-full bg-zinc-200 dark:bg-zinc-900 rounded-2xl animate-pulse ${i % 2 === 0 ? 'h-64' : 'h-96'}`} />
+                        </div>
+                    ))}
+                </div>
+            ) : filteredWaifu.length === 0 ? (
+                // EMPTY STATE
+                <div className="py-20 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center text-zinc-400 text-sm bg-zinc-50/50 dark:bg-zinc-900/20">
+                    <Sparkles size={24} className="mb-2 opacity-50" />
+                    <p>No characters found.</p>
+                    <button
+                        onClick={() => { setSearchQuery(""); setSelectedSource("All"); }}
+                        className="mt-2 text-xs font-bold text-rose-500 hover:underline"
+                    >
+                        Clear Filters
+                    </button>
+                </div>
+            ) : (
+                // REAL CONTENT
+                <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+                    <AnimatePresence mode="popLayout">
+                        {filteredWaifu.map((char, index) => (
+                            <WaifuCard key={char.id} char={char} index={index} />
+                        ))}
+                    </AnimatePresence>
                 </div>
             )}
         </div>
     );
-};
+}
 
-export default function WaifuPage() {
-  const { t } = useLanguage();
+// --- COMPONENT: CARD ---
+function WaifuCard({ char, index }) {
+    // Cek apakah file adalah video
+    const isVideo = char.image_url?.match(/\.(mp4|webm|ogg|mov)$/i);
 
-  return (
-    <div className="min-h-screen font-sans transition-colors duration-300 bg-zinc-50 dark:bg-[#0a0a0a]">
-      <div className="flex w-full">
-        <Sidebar />
+    return (
+        <motion.div
+            layout
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.4 }}
+            className="break-inside-avoid mb-4 group relative"
+        >
+            <div className="relative rounded-2xl overflow-hidden bg-zinc-900 shadow-sm border border-zinc-200 dark:border-white/5 hover:shadow-2xl hover:shadow-rose-500/10 transition-all duration-500 hover:-translate-y-1">
 
-        <main className="flex-1 w-full min-h-screen pt-28 lg:pt-0">
-          <div className="max-w-6xl mx-auto px-4 py-8 lg:py-10">
-             
-             {/* HEADER TANPA ICON HEART */}
-             <div className="mb-8 border-b border-zinc-200 dark:border-white/5 pb-8 transition-colors">
-                <h1 className="text-3xl font-bold text-zinc-900 dark:text-white mb-2 transition-colors">
-                    {t.waifu_title}
-                </h1>
-                <p className="text-zinc-500 dark:text-zinc-400">{t.waifu_subtitle}</p>
-             </div>
-
-             {/* KONTEN KARAKTER */}
-             <div className="space-y-12">
-
-                {/* --- CHARACTER 1: ALYA --- */}
-                <div className="transition-colors">
-                    <div className="flex flex-col md:flex-row gap-5 md:gap-6 items-start">
-                        <div className="w-full md:w-1/2 lg:max-w-md rounded-xl overflow-hidden border border-zinc-200 dark:border-white/10 bg-zinc-100 dark:bg-black shadow-lg relative aspect-video shrink-0">
-                            <SmartVideo src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Kujou.mp4" />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/10 text-pink-600 dark:text-pink-400 border border-pink-500/20 text-[10px] font-bold uppercase tracking-wider mb-1">
-                                <Sparkles size={12} /> {t.alya_role || "Anime"}
-                            </div>
-                            <h3 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-white">{t.alya_name}</h3>
-                            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{t.alya_desc}</p>
-                            <div className="flex gap-4 pt-2 border-t border-zinc-200 dark:border-white/5 mt-2">
-                                <div><span className="block text-[10px] text-zinc-400 uppercase font-bold tracking-wider">{t.alya_job_label}</span><span className="text-xs text-zinc-800 dark:text-zinc-200 font-medium">{t.alya_job_val}</span></div>
-                                <div><span className="block text-[10px] text-zinc-400 uppercase font-bold tracking-wider">{t.alya_origin_label}</span><span className="text-xs text-zinc-800 dark:text-zinc-200 font-medium">{t.alya_origin_val}</span></div>
-                            </div>
-                        </div>
-                    </div>
+                {/* MEDIA (Image or Video) */}
+                <div className="relative w-full">
+                    {isVideo ? (
+                        <video
+                            src={char.image_url}
+                            autoPlay muted loop playsInline
+                            className="w-full h-auto object-cover"
+                        />
+                    ) : (
+                        <Image
+                            src={char.image_url}
+                            alt={char.name}
+                            width={0}
+                            height={0}
+                            sizes="(max-width: 768px) 50vw, 33vw"
+                            className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                    )}
                 </div>
 
-                {/* --- CHARACTER 2: CASTORICE --- */}
-                <div className="transition-colors">
-                    <div className="flex flex-col md:flex-row-reverse gap-5 md:gap-6 items-start">
-                        <div className="w-full md:w-1/2 lg:max-w-md rounded-xl overflow-hidden border border-zinc-200 dark:border-white/10 bg-zinc-100 dark:bg-black shadow-lg relative aspect-video shrink-0">
-                            <SmartVideo src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Castorice.mp4" />
+                {/* OVERLAY GRADIENT */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-300" />
+
+                {/* CONTENT (Text) */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+
+                    {/* Source Badge */}
+                    {char.anime_source && (
+                        <span className="inline-block px-2 py-0.5 mb-2 rounded text-[10px] font-bold uppercase tracking-widest bg-rose-500/20 text-rose-200 border border-rose-500/30 backdrop-blur-md">
+                            {char.anime_source}
+                        </span>
+                    )}
+
+                    {/* Name */}
+                    <h2 className="text-white font-bold text-lg leading-tight drop-shadow-md">
+                        {char.name}
+                    </h2>
+
+                    {/* Description (Visible on Hover) */}
+                    {char.description && (
+                        <div className="h-0 group-hover:h-auto overflow-hidden transition-all duration-300">
+                            <p className="text-zinc-300 text-xs mt-2 line-clamp-3 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
+                                {char.description}
+                            </p>
                         </div>
-                        <div className="flex-1 space-y-2 md:text-right">
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold uppercase tracking-wider mb-1">
-                                <Sparkles size={12} /> {t.wife2_role}
-                            </div>
-                            <h3 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-white">{t.wife2_name}</h3>
-                            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{t.wife2_desc}</p>
-                            <div className="flex gap-4 pt-2 border-t border-zinc-200 dark:border-white/5 mt-2 justify-start md:justify-end">
-                                <div className="text-left md:text-right"><span className="block text-[10px] text-zinc-400 uppercase font-bold tracking-wider">{t.wife2_job_label}</span><span className="text-xs text-zinc-800 dark:text-zinc-200 font-medium">{t.wife2_job_val}</span></div>
-                                <div className="text-left md:text-right"><span className="block text-[10px] text-zinc-400 uppercase font-bold tracking-wider">{t.wife2_origin_label}</span><span className="text-xs text-zinc-800 dark:text-zinc-200 font-medium">{t.wife2_origin_val}</span></div>
-                            </div>
+                    )}
+
+                    {/* Video Indicator */}
+                    {isVideo && (
+                        <div className="absolute bottom-4 right-4 text-rose-400 opacity-80">
+                            <PlayCircle size={20} />
                         </div>
-                    </div>
+                    )}
                 </div>
-
-                {/* --- CHARACTER 3: SHOREKEEPER --- */}
-                <div className="transition-colors">
-                    <div className="flex flex-col md:flex-row gap-5 md:gap-6 items-start">
-                        <div className="w-full md:w-1/2 lg:max-w-md rounded-xl overflow-hidden border border-zinc-200 dark:border-white/10 bg-zinc-100 dark:bg-black shadow-lg relative aspect-video shrink-0">
-                            <SmartVideo src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Shore.mp4" />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-bold uppercase tracking-wider mb-1">
-                                <Sparkles size={12} /> {t.wife3_role}
-                            </div>
-                            <h3 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-white">{t.wife3_name}</h3>
-                            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{t.wife3_desc}</p>
-                            <div className="flex gap-4 pt-2 border-t border-zinc-200 dark:border-white/5 mt-2">
-                                <div><span className="block text-[10px] text-zinc-400 uppercase font-bold tracking-wider">{t.wife3_job_label}</span><span className="text-xs text-zinc-800 dark:text-zinc-200 font-medium">{t.wife3_job_val}</span></div>
-                                <div><span className="block text-[10px] text-zinc-400 uppercase font-bold tracking-wider">{t.wife3_origin_label}</span><span className="text-xs text-zinc-800 dark:text-zinc-200 font-medium">{t.wife3_origin_val}</span></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* --- CHARACTER 4: CHISA --- */}
-                <div className="transition-colors">
-                    <div className="flex flex-col md:flex-row-reverse gap-5 md:gap-6 items-start">
-                        <div className="w-full md:w-1/2 lg:max-w-md rounded-xl overflow-hidden border border-zinc-200 dark:border-white/10 bg-zinc-100 dark:bg-black shadow-lg relative aspect-video shrink-0">
-                            <SmartVideo src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa2.mp4" />
-                        </div>
-                        <div className="flex-1 space-y-2 md:text-right">
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 text-[10px] font-bold uppercase tracking-wider mb-1">
-                                <Sparkles size={12} /> {t.wife4_role}
-                            </div>
-                            <h3 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-white">{t.wife4_name}</h3>
-                            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{t.wife4_desc}</p>
-                            <div className="flex gap-4 pt-2 border-t border-zinc-200 dark:border-white/5 mt-2 justify-start md:justify-end">
-                                <div className="text-left md:text-right"><span className="block text-[10px] text-zinc-400 uppercase font-bold tracking-wider">{t.wife4_job_label}</span><span className="text-xs text-zinc-800 dark:text-zinc-200 font-medium">{t.wife4_job_val}</span></div>
-                                <div className="text-left md:text-right"><span className="block text-[10px] text-zinc-400 uppercase font-bold tracking-wider">{t.wife4_origin_label}</span><span className="text-xs text-zinc-800 dark:text-zinc-200 font-medium">{t.wife4_origin_val}</span></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-             </div>
-             
-
-          </div>
-        </main>
-      </div>
-    </div>
-  );
+            </div>
+        </motion.div>
+    );
 }

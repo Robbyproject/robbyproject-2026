@@ -2,13 +2,25 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Mode output ini penting untuk Vercel agar bisa membuat situs statis
-  output: 'export',
+  // -------------------------------------------------------------------------
+  // 1. HAPUS "output: export". 
+  //    Agar fitur Image Optimization (compress gambar otomatis) & ISR jalan.
+  //    Vercel support mode ini secara native (Serverless), jadi lebih cepat.
+  // -------------------------------------------------------------------------
 
-  // Menonaktifkan optimisasi gambar bawaan Next.js yang tidak bekerja 
-  // pada situs statis. Ini akan membuat komponen <Image> berfungsi seperti <img> biasa.
   images: {
-    unoptimized: true,
+    // 2. HAPUS "unoptimized: true".
+    //    Kita ingin Next.js mengompres gambar agar Website NGEBUT.
+
+    // 3. Daftarkan Domain Supabase Anda di sini:
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'cnjncaybcpnzwookgsgq.supabase.co', // Hostname dari URL gambar Supabase Anda
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
   },
 };
 

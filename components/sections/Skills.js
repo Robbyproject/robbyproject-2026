@@ -10,7 +10,6 @@ import {
   SiTailwindcss, 
   SiAdobeillustrator,
   SiJavascript,
-  SiTypescript
 } from "react-icons/si";
 
 // Data Skills
@@ -22,7 +21,6 @@ const skills = [
   { name: "Tailwind", icon: SiTailwindcss, color: "#38B2AC" },
   { name: "Illustrator", icon: SiAdobeillustrator, color: "#FF9A00" },
   { name: "JavaScript", icon: SiJavascript, color: "#F7DF1E" },
-  { name: "TypeScript", icon: SiTypescript, color: "#3178C6" },
 ];
 
 // KITA DUPLIKASI ARRAY INI 4 KALI AGAR CUKUP PANJANG UNTUK LAYAR LEBAR

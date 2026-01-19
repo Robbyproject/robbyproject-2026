@@ -3,6 +3,17 @@
 @tailwind utilities;
 
 @layer base {
+  /* FIX GAP: Reset margin/padding */
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    /* ❌ JANGAN PAKAI height: 100%; INI PENYEBAB SCROLL MACET */
+    /* height: 100%;  <-- Ini dihapus */
+    
+    /* overflow-x: hidden; <-- Kadang ini juga bikin konflik, lebih aman ditaruh di wrapper saja atau biarkan default */
+  }
+
   body {
     /* DEFAULT (Light Mode): Background Putih Abu, Teks Gelap */
     @apply bg-zinc-50 text-zinc-900;
@@ -39,4 +50,31 @@
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
+}
+
+main > div:first-child,
+main > section:first-child {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* --- LENIS SMOOTH SCROLL FIX (WAJIB ADA) --- */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
 }
