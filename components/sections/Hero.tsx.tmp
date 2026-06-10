@@ -1,0 +1,304 @@
+"use client";
+
+import { useRef, useEffect, useState, useMemo, useCallback, type ReactNode } from "react";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import Link from "next/link";
+import Image from "next/image";
+import { supabase } from "@/lib/supabase";
+import {
+  MapPin, ArrowRight, User,
+  LayoutGrid, ArrowUpRight,
+  BadgeCheck, Sparkles, Code2, BarChart3,
+  Palette, Store, Award, Mail,
+  Eye, Star, Trophy, Heart, Clapperboard
+} from "lucide-react";
+import type { IconType } from "react-icons";
+import {
+  SiNextdotjs, SiTailwindcss, SiReact, SiFigma,
+  SiGithub, SiHtml5, SiJavascript, SiPhp, SiPython
+} from "react-icons/si";
+
+import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
+
+// --- TYPES ---
+interface BannerData {
+  image_url: string;
+  title?: string;
+  tag?: string;
+  description?: string;
+}
+
+interface ProjectData {
+  id: number;
+  title: string;
+  image_url: string | null;
+}
+
+interface ProductData {
+  id: number;
+  name: string;
+  image_url: string | null;
+  price: number;
+}
+
+interface AchievementData {
+  id: number;
+  title: string;
+  image_url: string | null;
+}
+
+interface AnimeData {
+  id: number;
+  title: string;
+  cover_url: string | null;
+  rating: number;
+}
+
+interface WaifuData {
+  id: number;
+  name: string;
+  image_url: string | null;
+}
+
+interface SkillItem {
+  name: string;
+  icon: IconType;
+  color: string;
+}
+
+// --- GLOBAL CACHE ---
+let cachedBanner: BannerData | null = null;
+let cachedProjects: ProjectData[] | null = null;
+let cachedProducts: ProductData[] | null = null;
+let cachedAchievements: AchievementData[] | null = null;
+let cachedAnime: AnimeData[] | null = null;
+let cachedWaifu: WaifuData[] | null = null;
+let cachedVisitCount: number | null = null;
+
+// --- BENTO CARD ---
+interface BentoCardProps {
+  children: ReactNode;
+  className?: string;
+  href?: string;
+}
+
+const BentoCard = ({ children, className, href = "#" }: BentoCardProps) => {
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  function handleMouseMove({ currentTarget, clientX, clientY }: React.MouseEvent<HTMLDivElement>) {
+    const { left, top } = currentTarget.getBoundingClientRect();
+    mouseX.set(clientX - left);
+    mouseY.set(clientY - top);
+  }
+
+  return (
+    <motion.div
+      whileHover={{ y: -4 }}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] as const }}
+      onMouseMove={handleMouseMove}
+      className={`group relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#111] p-7 hover:bg-zinc-50 dark:hover:bg-[#161616] transition-all duration-500 hover:border-emerald-500/20 ${className}`}
+    >
+      <Link href={href} className="absolute inset-0 z-30" aria-label="View Details" />
+
+      {/* Cursor Glow */}
+      <motion.div
+        className="pointer-events-none absolute -inset-px rounded-2xl opacity-0 transition duration-300 group-hover:opacity-100 z-10"
+        style={{
+          background: useTransform(
+            [mouseX, mouseY],
+            ([x, y]) => `radial-gradient(400px circle at ${x}px ${y}px, rgba(16,185,129,0.07), transparent 40%)`
+          ),
+        }}
+      />
+
+      {/* Shine Sweep */}
+      <div className="pointer-events-none absolute inset-0 rounded-2xl z-10 overflow-hidden">
+        <div className="shine-sweep-hero" />
+      </div>
+
+      <div className="relative z-20 h-full flex flex-col justify-between pointer-events-none">
+        {children}
+      </div>
+
+      <ArrowUpRight size={16} className="absolute top-7 right-7 text-zinc-700 group-hover:text-emerald-400 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300 z-30" />
+    </motion.div>
+  );
+};
+
+// --- MAGNETIC ---
+interface MagneticProps {
+  children: ReactNode;
+}
+
+const Magnetic = ({ children }: MagneticProps) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const position = { x: useMotionValue(0), y: useMotionValue(0) };
+  const springConfig = { damping: 15, stiffness: 150, mass: 0.1 };
+  const x = useSpring(position.x, springConfig);
+  const y = useSpring(position.y, springConfig);
+
+  const handleMouse = (e: React.MouseEvent<HTMLDivElement>) => {
+    const { clientX, clientY } = e;
+    if (!ref.current) return;
+    const { height, width, left, top } = ref.current.getBoundingClientRect();
+    position.x.set((clientX - (left + width / 2)) * 0.3);
+    position.y.set((clientY - (top + height / 2)) * 0.3);
+  };
+
+  return (
+    <motion.div ref={ref} onMouseMove={handleMouse} onMouseLeave={() => { position.x.set(0); position.y.set(0); }} style={{ x, y }} className="relative z-10">
+      {children}
+    </motion.div>
+  );
+};
+
+// --- ANIMATION VARIANTS ---
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, filter: "blur(5px)", y: 20 },
+  visible: { opacity: 1, filter: "blur(0px)", y: 0, transition: { duration: 0.6, ease: "easeOut" as const } }
+};
+
+const mySkills: SkillItem[] = [
+  { name: "HTML", icon: SiHtml5, color: "#E34F26" },
+  { name: "JS", icon: SiJavascript, color: "#F7DF1E" },
+  { name: "PHP", icon: SiPhp, color: "#777BB4" },
+  { name: "Python", icon: SiPython, color: "#3776AB" },
+  { name: "Next.js", icon: SiNextdotjs, color: "#ffffff" },
+  { name: "React", icon: SiReact, color: "#61DAFB" },
+  { name: "Tailwind", icon: SiTailwindcss, color: "#38B2AC" },
+  { name: "Figma", icon: SiFigma, color: "#F24E1E" },
+  { name: "Github", icon: SiGithub, color: "#ffffff" },
+];
+
+const heroDescription = ""; // Will be overridden by translation
+
+// --- SERVICE ITEMS (labels come from translations in render) ---
+const serviceItems = [
+  { icon: "🎨", key: "serv_graphic_title" as const },
+  { icon: "💻", key: "serv_web_title" as const },
+  { icon: "📐", key: "serv_uiux_title" as const },
+];
+
+// --- NOTIFICATION SCROLL LIST (stacked notification style, top highlighted, bottom fades) ---
+function NotificationScrollList({ items, renderNotification, interval = 2800 }: {
+  items: any[];
+  renderNotification: (item: any, index: number) => ReactNode;
+  interval?: number;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isPaused = useRef(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (items.length === 0) return;
+
+    const timer = setInterval(() => {
+      if (isPaused.current) return;
+      setActiveIndex((prev) => (prev + 1) % items.length);
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [items.length, interval]);
+
+  // Scroll to the active item — only inside this container, never the page
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const target = el.querySelector(`[data-notif-index="${activeIndex}"]`) as HTMLElement;
+    if (target) {
+      // Calculate offset relative to the scroll container, not the page
+      const containerTop = el.getBoundingClientRect().top;
+      const targetTop = target.getBoundingClientRect().top;
+      const offset = targetTop - containerTop;
+      el.scrollTop += offset;
+    }
+  }, [activeIndex]);
+
+  return (
+    <div className="flex-1 overflow-hidden relative notif-scroll-container">
+      <div
+        ref={scrollRef}
+        className="h-full overflow-hidden scroll-smooth"
+        onMouseEnter={() => { isPaused.current = true; }}
+        onMouseLeave={() => { isPaused.current = false; }}
+      >
+        {/* Duplicate items for seamless loop */}
+        <div className="space-y-2">
+          {[...items, ...items].map((item, i) => {
+            const relativeIndex = i % items.length;
+            const isActive = relativeIndex === activeIndex;
+
+            return (
+              <div
+                key={i}
+                data-notif-index={relativeIndex}
+                className="transition-all duration-500"
+                style={{
+                  opacity: isActive ? 1 : 0.25,
+                  transform: isActive ? 'scale(1)' : 'scale(0.97)',
+                  filter: isActive ? 'none' : 'brightness(0.4)',
+                }}
+              >
+                {renderNotification(item, relativeIndex)}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Gradient overlay — uses CSS classes that respond to group-hover */}
+      <div className="notif-gradient pointer-events-none absolute inset-0 z-10" />
+    </div>
+  );
+}
+
+export default function Home() {
+  const { t } = useLanguage();
+  const [featuredContent, setFeaturedContent] = useState<BannerData | null>(cachedBanner || null);
+  const [projects, setProjects] = useState<ProjectData[]>(cachedProjects || []);
+  const [products, setProducts] = useState<ProductData[]>(cachedProducts || []);
+  const [achievements, setAchievements] = useState<AchievementData[]>(cachedAchievements || []);
+  const [animeList, setAnimeList] = useState<AnimeData[]>(cachedAnime || []);
+  const [waifuList, setWaifuList] = useState<WaifuData[]>(cachedWaifu || []);
+  const [visitCount, setVisitCount] = useState<number>(cachedVisitCount || 0);
+
+  useEffect(() => {
+    if (cachedBanner && cachedProjects?.length && cachedProducts?.length) return;
+
+    const fetchData = async () => {
+      try {
+        const [bannerRes, projectRes, productRes, achieveRes, animeRes, waifuRes, visitRes] = await Promise.all([
+          supabase.from("banners").select("*").eq("is_active", true).order('created_at', { ascending: false }).limit(1).single(),
+          supabase.from("projects").select("id, title, image_url").order("id", { ascending: false }).limit(4),
+          supabase.from("products").select("id, name, image_url, price").order("created_at", { ascending: false }).limit(3),
+          supabase.from("achievements").select("id, title, image_url").order("id", { ascending: false }).limit(3),
+          supabase.from("anime_list").select("id, title, cover_url, rating").order("id", { ascending: false }).limit(8),
+          supabase.from("waifu_list").select("id, name, image_url").order("id", { ascending: false }).limit(8),
+          supabase.from("app_visits").select("id", { head: true, count: "exact" }),
+        ]);
+
+        if (bannerRes.data) { setFeaturedContent(bannerRes.data as BannerData); cachedBanner = bannerRes.data as BannerData; }
+        if (projectRes.data) { setProjects(projectRes.data as ProjectData[]); cachedProjects = projectRes.data as ProjectData[]; }
+        if (productRes.data) { setProducts(productRes.data as ProductData[]); cachedProducts = productRes.data as ProductData[]; }
+        if (achieveRes.data) { setAchievements(achieveRes.data as AchievementData[]); cachedAchievements = achieveRes.data as AchievementData[]; }
+        if (animeRes.data) { setAnimeList(animeRes.data as AnimeData[]); cachedAnime = animeRes.data as AnimeData[]; }
+        if (waifuRes.data) { setWaifuList(waifuRes.data as WaifuData[]); cachedWaifu = waifuRes.data as WaifuData[]; }
+        if (visitRes.count !== null) { setVisitCount(visitRes.count); cachedVisitCount = visitRes.count; }
+
+      } catch (error: any) {
+        console.error("Error loading data:", error?.message);
+      }
+    };
+
+    fetchData();
+  }, []);
+

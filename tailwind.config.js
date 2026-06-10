@@ -11,7 +11,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-inter)'],      // Mendefinisikan kelas 'font-sans'
+        sans: ['var(--font-jakarta)'],     // Plus Jakarta Sans via next/font
         pixel: ['var(--font-pixel)'],   // Mendefinisikan kelas 'font-pixel'
       },
     },

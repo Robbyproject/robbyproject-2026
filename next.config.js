@@ -16,9 +16,15 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'cnjncaybcpnzwookgsgq.supabase.co', // Hostname dari URL gambar Supabase Anda
+        hostname: 'cnjncaybcpnzwookgsgq.supabase.co',
         port: '',
         pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+        port: '',
+        pathname: '/**',
       },
     ],
   },

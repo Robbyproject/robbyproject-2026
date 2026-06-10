@@ -5,10 +5,14 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        // 👇 GANTI DENGAN PROJECT ID SUPABASE ANDA
-        // Cek URL public yang tadi Anda copy. 
-        // Misal: abcdefghijklm.supabase.co
-        hostname: 'https://cnjncaybcpnzwookgsgq.supabase.co/', 
+        // Supabase Storage — portfolio images
+        hostname: 'cnjncaybcpnzwookgsgq.supabase.co',
+        port: '',
+      },
+      {
+        protocol: 'https',
+        // GitHub avatar for dashboard profile
+        hostname: 'avatars.githubusercontent.com',
         port: '',
       },
     ],
