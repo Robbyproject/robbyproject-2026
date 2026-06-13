@@ -5,11 +5,13 @@ import { useLanguage } from "@/components/providers/AppProviders";
 import { AnimatePresence } from "framer-motion";
 import anime from "animejs";
 import {
-    Trophy, Search, ArrowUpRight, CheckCircle2,
+    Trophy, Search, CheckCircle2,
     Award, ListFilter, ChevronDown, Check
 } from "lucide-react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import ViewDetailOverlay from "@/components/features/detail/ViewDetailOverlay";
 
 export default function AchievementsPage() {
     const { t } = useLanguage();
@@ -210,7 +212,7 @@ export default function AchievementsPage() {
                         </button>
                     </div>
                 ) : (
-                    <div ref={gridRef} className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+                    <div ref={gridRef} className="columns-2 md:columns-3 lg:columns-4 gap-3 sm:gap-4">
                         {filteredAchievements.map((item) => (
                             <AchievementCard key={item.id} item={item} />
                         ))}
@@ -262,13 +264,15 @@ export default function AchievementsPage() {
 
 // --- CARD COMPONENT with anime.js hover (matched to services style) ---
 const AchievementCard = memo(function AchievementCard({ item }: { item: any }) {
+    const router = useRouter();
+    const goToDetail = () => router.push(`/achievements/${item.id}`);
     const cardRef = useRef(null);
     const glowRef = useRef<HTMLDivElement>(null);
 
     // Cursor-following glow (same as services)
-    const handleMouseMove = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
+    const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         if (!cardRef.current || !glowRef.current) return;
-        const rect = (cardRef.current as HTMLAnchorElement).getBoundingClientRect();
+        const rect = (cardRef.current as HTMLDivElement).getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         glowRef.current.style.background =
@@ -297,14 +301,13 @@ const AchievementCard = memo(function AchievementCard({ item }: { item: any }) {
 
     return (
         <div className="break-inside-avoid mb-4 ach-card group relative">
-            <a
+            <div
                 ref={cardRef}
-                href={item.link_url || "#"}
-                target={item.link_url ? "_blank" : "_self"}
-                rel={item.link_url ? "noopener noreferrer" : ""}
-                className={`block bg-white dark:bg-[#121212] border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5 hover:border-emerald-500/30
-                ${!item.link_url ? 'cursor-default' : 'cursor-pointer'}`}
-                onClick={(e) => !item.link_url && e.preventDefault()}
+                onClick={goToDetail}
+                role="link"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter") goToDetail(); }}
+                className="block bg-white dark:bg-[#121212] border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-xl hover:shadow-emerald-500/5 hover:border-emerald-500/30"
                 onMouseMove={handleMouseMove}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
@@ -321,7 +324,7 @@ const AchievementCard = memo(function AchievementCard({ item }: { item: any }) {
                 </div>
 
                 {/* Image area */}
-                <div className="relative w-full bg-zinc-100 dark:bg-black/30 p-4 z-[1]">
+                <div className="relative w-full bg-zinc-100 dark:bg-black/30 p-2 sm:p-4 z-[1]">
                     {item.image_url ? (
                         <div className="relative w-full h-auto">
                             <Image
@@ -338,17 +341,12 @@ const AchievementCard = memo(function AchievementCard({ item }: { item: any }) {
                             <Award size={40} strokeWidth={1.5} />
                         </div>
                     )}
-                    {item.link_url && (
-                        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                            <div className="w-8 h-8 bg-white dark:bg-zinc-800 text-black dark:text-white rounded-full flex items-center justify-center shadow-lg border border-zinc-100 dark:border-zinc-700">
-                                <ArrowUpRight size={14} />
-                            </div>
-                        </div>
-                    )}
+                    {/* View Detail Overlay */}
+                    <ViewDetailOverlay />
                 </div>
 
                 {/* Content */}
-                <div className="p-5 z-[1] relative">
+                <div className="p-3 sm:p-5 z-[1] relative">
                     <div className="flex items-center gap-2 mb-3">
                         <div className="px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-100 dark:border-emerald-500/20 flex items-center gap-1.5">
                             {(item.issuer || item.category) && <Award size={12} className="text-emerald-500" />}
@@ -358,12 +356,12 @@ const AchievementCard = memo(function AchievementCard({ item }: { item: any }) {
                         </div>
                     </div>
 
-                    <h3 className="text-lg font-bold text-zinc-900 dark:text-white leading-tight mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                    <h3 className="text-sm sm:text-lg font-bold text-zinc-900 dark:text-white leading-tight mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
                         {item.title}
                     </h3>
 
                     {item.description && (
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-3 leading-relaxed mb-4">
+                        <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 line-clamp-3 leading-relaxed mb-3 sm:mb-4">
                             {item.description}
                         </p>
                     )}
@@ -384,7 +382,7 @@ const AchievementCard = memo(function AchievementCard({ item }: { item: any }) {
 
                 {/* Bottom gradient line (same as services) */}
                 <div className="absolute bottom-0 left-0 h-0.5 w-0 group-hover:w-full bg-gradient-to-r from-transparent via-emerald-500 to-transparent transition-all duration-700 opacity-80 z-20" />
-            </a>
+            </div>
         </div>
     );
 });

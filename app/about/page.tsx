@@ -120,7 +120,7 @@ export default function AboutPage() {
                             {/* Profile Image */}
                             <motion.div variants={imageVariants} className="relative aspect-square rounded-[1.5rem] overflow-hidden bg-zinc-200 dark:bg-zinc-800">
                                 <img
-                                    src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa1.webp"
+                                    src="https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Elaina.jpg"
                                     alt="Profile"
                                     className="object-cover w-full h-full hover:scale-105 transition-transform duration-700"
                                 />
@@ -154,7 +154,7 @@ export default function AboutPage() {
                                     <Link href="https://linkedin.com/in/robby-fabian" target="_blank" className="flex-1 h-10 rounded-xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors">
                                         <FaLinkedin size={18} />
                                     </Link>
-                                    <Link href="https://instagram.com/mikookatsunagi" target="_blank" className="flex-1 h-10 rounded-xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:text-pink-600 dark:hover:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-500/10 transition-colors">
+                                    <Link href="https://instagram.com/mikocwk" target="_blank" className="flex-1 h-10 rounded-xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:text-pink-600 dark:hover:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-500/10 transition-colors">
                                         <SiInstagram size={18} />
                                     </Link>
                                 </div>

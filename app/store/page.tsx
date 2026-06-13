@@ -11,9 +11,10 @@ import {
     ChevronDown
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Tilt from "react-parallax-tilt";
+import ViewDetailOverlay from "@/components/features/detail/ViewDetailOverlay";
 
 // Helper Formatter
 const formatRupiah = (num: number) => {
@@ -216,7 +217,7 @@ export default function StorePage() {
 
             {/* --- CONTENT AREA --- */}
             {loading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
                     {[...Array(4)].map((_, i) => (
                         <div key={i} className="p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-4">
                             <div className="w-full aspect-[4/3] bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
@@ -248,7 +249,7 @@ export default function StorePage() {
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                    className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6"
                 >
                     <AnimatePresence>
                         {filteredProducts.map((item) => (
@@ -297,6 +298,8 @@ export default function StorePage() {
 // --- ENHANCED PRODUCT CARD (Memoized) ---
 const ProductCard = memo(function ProductCard({ item }: { item: any }) {
     const price = item.price || 0;
+    const router = useRouter();
+    const goToDetail = () => router.push(`/store/${item.id}`);
 
     // Refs for glow — updated imperatively, NO state = NO re-renders on mouse move
     const glowRef = useRef<HTMLDivElement>(null);
@@ -333,7 +336,11 @@ const ProductCard = memo(function ProductCard({ item }: { item: any }) {
                 <div
                     ref={cardRef}
                     onMouseMove={handleMouseMove}
-                    className="group relative flex flex-col h-full p-3 rounded-2xl transition-all duration-300
+                    onClick={goToDetail}
+                    role="link"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === "Enter") goToDetail(); }}
+                    className="group relative flex flex-col h-full p-2 sm:p-3 rounded-2xl transition-all duration-300 cursor-pointer
                         bg-white border border-zinc-200 shadow-sm
                         hover:shadow-xl hover:shadow-emerald-500/5 hover:border-emerald-500/20
                         dark:bg-zinc-900/40 dark:backdrop-blur-md dark:border-white/10
@@ -347,7 +354,7 @@ const ProductCard = memo(function ProductCard({ item }: { item: any }) {
                     />
 
                     {/* 1. IMAGE SECTION */}
-                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800 mb-4 border border-zinc-100 dark:border-white/5">
+                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800 mb-2.5 sm:mb-4 border border-zinc-100 dark:border-white/5">
                         {item.image_url ? (
                             <Image
                                 src={item.image_url}
@@ -369,6 +376,9 @@ const ProductCard = memo(function ProductCard({ item }: { item: any }) {
 
                         {/* Hover Overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[1]" />
+
+                        {/* View Detail Overlay */}
+                        <ViewDetailOverlay />
                     </div>
 
                     {/* 2. TEXT CONTENT */}
@@ -379,25 +389,29 @@ const ProductCard = memo(function ProductCard({ item }: { item: any }) {
                             </span>
                         </div>
 
-                        <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-1 line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                        <h3 className="text-sm sm:text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-1 line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
                             {item.name}
                         </h3>
-                        <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed mb-4 flex-1">
+                        <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed mb-3 sm:mb-4 flex-1">
                             {item.description}
                         </p>
 
                         {/* 3. BUTTON SECTION */}
-                        <Link
-                            href={`/contact?product=${encodeURIComponent(item.name)}`}
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/contact?product=${encodeURIComponent(item.name)}`);
+                            }}
                             className="store-btn-shimmer
-                                flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-medium transition-all duration-300
+                                flex items-center justify-center gap-2 w-full py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300
                                 bg-zinc-900 text-white hover:bg-emerald-600 active:scale-95
                                 dark:bg-white dark:text-zinc-900 dark:hover:bg-emerald-500 dark:hover:text-white
                             "
                         >
                             <span>Order Now</span>
                             <ArrowUpRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </Tilt>

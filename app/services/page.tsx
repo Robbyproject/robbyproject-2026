@@ -53,7 +53,7 @@ export default function ServicesPage() {
                 {/* CTA Button */}
                 <Link
                     href="/contact"
-                    className="group/btn inline-flex items-center gap-2 px-5 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl font-bold text-sm transition-all shadow-sm hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5"
+                    className="group/btn inline-flex items-center gap-2 w-fit px-5 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl font-bold text-sm transition-all shadow-sm hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5"
                 >
                     <span>Let&apos;s Talk</span>
                     <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />

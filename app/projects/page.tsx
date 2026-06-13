@@ -6,15 +6,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     Briefcase,
     Search,
-    ArrowUpRight,
     ListFilter,
     Check,
     ChevronDown,
     Pin
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import ViewDetailOverlay from "@/components/features/detail/ViewDetailOverlay";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -231,7 +231,7 @@ export default function ProjectsPage() {
 
             {/* --- PINNED + REGULAR IN ONE GRID --- */}
             {loading ? (
-                <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+                <div className="columns-2 md:columns-3 lg:columns-4 gap-3 sm:gap-4">
                     {[...Array(8)].map((_, i) => (
                         <div key={i} className="break-inside-avoid mb-4">
                             <div className="w-full bg-zinc-200 dark:bg-zinc-900 rounded-xl animate-pulse h-40"></div>
@@ -257,7 +257,7 @@ export default function ProjectsPage() {
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
-                    className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4"
+                    className="columns-2 md:columns-3 lg:columns-4 gap-3 sm:gap-4"
                 >
                     <AnimatePresence>
                         {filteredProjects.map((project: any) => (
@@ -312,7 +312,8 @@ export default function ProjectsPage() {
 }
 
 const ProjectCard = memo(function ProjectCard({ project }: { project: any }) {
-    const hasLink = !!project.link_url;
+    const router = useRouter();
+    const goToDetail = () => router.push(`/projects/${project.id}`);
     const isPinned = !!project.is_pinned;
     const glowRef = useRef<HTMLDivElement>(null);
     const cardRef = useRef<HTMLDivElement>(null);
@@ -330,7 +331,11 @@ const ProjectCard = memo(function ProjectCard({ project }: { project: any }) {
         <div
             ref={cardRef}
             onMouseMove={handleMouseMove}
-            className={`group relative block bg-white dark:bg-[#121212] rounded-xl overflow-hidden border transition-all duration-300 hover:shadow-xl ${isPinned ? 'border-emerald-500/40 hover:border-emerald-500/60' : 'border-zinc-200 dark:border-zinc-800 hover:border-emerald-500/30'} ${hasLink ? 'cursor-pointer' : ''}`}
+            onClick={goToDetail}
+            role="link"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === "Enter") goToDetail(); }}
+            className={`group relative block bg-white dark:bg-[#121212] rounded-xl overflow-hidden border transition-all duration-300 cursor-pointer hover:shadow-xl ${isPinned ? 'border-emerald-500/40 hover:border-emerald-500/60' : 'border-zinc-200 dark:border-zinc-800 hover:border-emerald-500/30'}`}
         >
             {/* Cursor Glow */}
             <div
@@ -368,25 +373,20 @@ const ProjectCard = memo(function ProjectCard({ project }: { project: any }) {
                         <span className="text-[10px]">No Preview</span>
                     </div>
                 )}
-                {hasLink && (
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[1px]">
-                        <span className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center shadow-lg transform scale-0 group-hover:scale-100 transition-transform duration-300">
-                            <ArrowUpRight size={14} />
-                        </span>
-                    </div>
-                )}
+                {/* View Detail Overlay */}
+                <ViewDetailOverlay />
             </div>
 
-            <div className="p-4 flex flex-col gap-2 relative z-20">
+            <div className="p-2.5 sm:p-4 flex flex-col gap-1.5 sm:gap-2 relative z-20">
                 <div className="flex items-center justify-between">
                     <span className="inline-block px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 rounded-md border border-zinc-200 dark:border-zinc-700 transition-transform duration-300 group-hover:scale-105 origin-left">
                         {project.category || "Project"}
                     </span>
                 </div>
-                <h3 className="text-sm md:text-base font-bold text-zinc-900 dark:text-white leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                <h3 className="text-[13px] sm:text-sm md:text-base font-bold text-zinc-900 dark:text-white leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
                     {project.title}
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-2">
+                <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-2">
                     {project.description}
                 </p>
                 {Array.isArray(project.tools) && project.tools.length > 0 && (
@@ -411,13 +411,7 @@ const ProjectCard = memo(function ProjectCard({ project }: { project: any }) {
             exit="exit"
             className="break-inside-avoid mb-4"
         >
-            {hasLink ? (
-                <Link href={project.link_url} target="_blank">
-                    {cardContent}
-                </Link>
-            ) : (
-                cardContent
-            )}
+            {cardContent}
         </motion.div>
     );
 });

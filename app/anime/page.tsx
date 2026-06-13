@@ -8,7 +8,6 @@ import {
     Tv,
     Search,
     Star,
-    ExternalLink,
     PlayCircle,
     CheckCircle2,
     Clock,
@@ -18,6 +17,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import ViewDetailOverlay from "@/components/features/detail/ViewDetailOverlay";
 
 export default function AnimePage() {
     const { t } = useLanguage();
@@ -204,7 +205,7 @@ export default function AnimePage() {
 
             {/* --- CONTENT --- */}
             {loading ? (
-                <div className="columns-1 sm:columns-2 md:columns-4 lg:columns-5 gap-4 space-y-4">
+                <div className="columns-2 md:columns-4 lg:columns-5 gap-3 sm:gap-4">
                     {[...Array(10)].map((_, i) => (
                         <div key={i} className="break-inside-avoid mb-4">
                             <div className={`w-full bg-zinc-200 dark:bg-zinc-900 rounded-xl animate-pulse ${i % 2 === 0 ? 'h-64' : 'h-80'}`} />
@@ -227,7 +228,7 @@ export default function AnimePage() {
                     </button>
                 </div>
             ) : (
-                <div ref={gridRef} className="columns-1 sm:columns-2 md:columns-4 lg:columns-5 gap-4 space-y-4">
+                <div ref={gridRef} className="columns-2 md:columns-4 lg:columns-5 gap-3 sm:gap-4">
                     {filteredAnime.map((item) => (
                         <AnimeCard key={item.id} anime={item} />
                     ))}
@@ -275,6 +276,8 @@ export default function AnimePage() {
 
 // --- CARD ---
 const AnimeCard = memo(function AnimeCard({ anime: item }: { anime: any }) {
+    const router = useRouter();
+    const goToDetail = () => router.push(`/anime/${item.id}`);
     const cardRef = useRef(null);
     const glowRef = useRef<HTMLDivElement>(null);
 
@@ -320,7 +323,11 @@ const AnimeCard = memo(function AnimeCard({ anime: item }: { anime: any }) {
                 onMouseMove={handleMouseMove}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
-                className="relative bg-white dark:bg-[#121212] border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5 hover:border-emerald-500/30"
+                onClick={goToDetail}
+                role="link"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter") goToDetail(); }}
+                className="relative bg-white dark:bg-[#121212] border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-xl hover:shadow-emerald-500/5 hover:border-emerald-500/30"
             >
                 {/* Cursor glow */}
                 <div ref={glowRef} className="anime-glow-overlay pointer-events-none absolute -inset-px rounded-xl z-10" />
@@ -347,19 +354,13 @@ const AnimeCard = memo(function AnimeCard({ anime: item }: { anime: any }) {
                         </div>
                     )}
 
-                    {/* External link */}
-                    {item.link_url && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                            <div className="w-7 h-7 bg-white dark:bg-zinc-800 text-black dark:text-white rounded-full flex items-center justify-center shadow-lg border border-zinc-100 dark:border-zinc-700">
-                                <ExternalLink size={12} />
-                            </div>
-                        </div>
-                    )}
+                    {/* View Detail Overlay */}
+                    <ViewDetailOverlay />
                 </div>
 
                 {/* Content */}
-                <div className="p-3 relative z-[1]">
-                    <h3 className="text-sm font-bold text-zinc-900 dark:text-white leading-tight mb-2 line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                <div className="p-2 sm:p-3 relative z-[1]">
+                    <h3 className="text-[13px] sm:text-sm font-bold text-zinc-900 dark:text-white leading-tight mb-1.5 sm:mb-2 line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
                         {item.title}
                     </h3>
 

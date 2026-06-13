@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import ViewDetailOverlay from "@/components/features/detail/ViewDetailOverlay";
 
 export default function WaifuPage() {
     const { t } = useLanguage();
@@ -201,7 +203,7 @@ export default function WaifuPage() {
 
             {/* --- CONTENT --- */}
             {loading ? (
-                <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+                <div className="columns-2 md:columns-3 lg:columns-4 gap-3 sm:gap-4">
                     {[...Array(8)].map((_, i) => (
                         <div key={i} className="break-inside-avoid mb-4">
                             <div className={`w-full bg-zinc-200 dark:bg-zinc-900 rounded-xl animate-pulse ${i % 2 === 0 ? 'h-64' : 'h-96'}`} />
@@ -220,7 +222,7 @@ export default function WaifuPage() {
                     </button>
                 </div>
             ) : (
-                <div ref={gridRef} className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+                <div ref={gridRef} className="columns-2 md:columns-3 lg:columns-4 gap-3 sm:gap-4">
                     {filteredWaifu.map((char) => (
                         <WaifuCard key={char.id} char={char} />
                     ))}
@@ -268,6 +270,8 @@ export default function WaifuPage() {
 
 // --- CARD ---
 const WaifuCard = memo(function WaifuCard({ char }: { char: any }) {
+    const router = useRouter();
+    const goToDetail = () => router.push(`/waifu/${char.id}`);
     const cardRef = useRef(null);
     const glowRef = useRef<HTMLDivElement>(null);
     const isVideo = useMemo(() => char.image_url?.match(/\.(mp4|webm|ogg|mov)$/i), [char.image_url]);
@@ -298,7 +302,11 @@ const WaifuCard = memo(function WaifuCard({ char }: { char: any }) {
                 onMouseMove={handleMouseMove}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
-                className="relative bg-white dark:bg-[#121212] border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5 hover:border-emerald-500/30"
+                onClick={goToDetail}
+                role="link"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter") goToDetail(); }}
+                className="relative bg-white dark:bg-[#121212] border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-xl hover:shadow-emerald-500/5 hover:border-emerald-500/30"
             >
                 {/* Cursor glow */}
                 <div ref={glowRef} className="waifu-glow-overlay pointer-events-none absolute -inset-px rounded-xl z-10" />
@@ -339,22 +347,25 @@ const WaifuCard = memo(function WaifuCard({ char }: { char: any }) {
                             </div>
                         </div>
                     )}
+
+                    {/* View Detail Overlay */}
+                    <ViewDetailOverlay />
                 </div>
 
                 {/* Content */}
-                <div className="p-3 relative z-[1]">
+                <div className="p-2 sm:p-3 relative z-[1]">
                     {char.anime_source && (
                         <span className="inline-block px-2 py-0.5 mb-2 rounded text-[10px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-500">
                             {char.anime_source}
                         </span>
                     )}
 
-                    <h3 className="text-sm font-bold text-zinc-900 dark:text-white leading-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                    <h3 className="text-[13px] sm:text-sm font-bold text-zinc-900 dark:text-white leading-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
                         {char.name}
                     </h3>
 
                     {char.description && (
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 line-clamp-2 leading-relaxed">
+                        <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 mt-1 sm:mt-1.5 line-clamp-2 leading-relaxed">
                             {char.description}
                         </p>
                     )}

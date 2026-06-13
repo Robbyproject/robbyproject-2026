@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { scrollToId } from "@/utils/helpers";
 
-const PROFILE_IMG = "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/Chisa1.webp";
+const PROFILE_IMG = "https://cnjncaybcpnzwookgsgq.supabase.co/storage/v1/object/public/portfolio-assets/download.webp";
 
 export default function Sidebar() {
   const pathname = usePathname();

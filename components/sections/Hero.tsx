@@ -306,14 +306,14 @@ export default function Home() {
             <Link href="/contact" className="block group relative w-full h-[380px] md:h-[420px] rounded-2xl overflow-hidden border border-zinc-200 dark:border-white/10 shadow-2xl shadow-emerald-500/5 bg-zinc-100 dark:bg-zinc-900">
               <Image src={featuredContent.image_url} alt={featuredContent.title || "Featured Banner"} fill priority quality={85} sizes="(max-width: 768px) 100vw, 100vw" className="object-cover opacity-60 transition-transform duration-700 group-hover:scale-105 group-hover:opacity-80" />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10" />
-              <div className="absolute bottom-0 left-0 p-6 md:p-12 w-full flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6 z-20">
-                <div className="space-y-2 md:space-y-3 flex-1">
-                  <span className="inline-block px-3 py-1 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/30 rounded-full text-[10px] font-bold text-emerald-400 uppercase tracking-widest">{featuredContent.tag}</span>
-                  <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight max-w-2xl">{featuredContent.title}</h2>
-                  <p className="text-zinc-300 text-sm md:text-base max-w-xl line-clamp-2">{featuredContent.description}</p>
+              <div className="absolute bottom-0 left-0 p-4 sm:p-6 md:p-12 w-full flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-4 md:gap-6 z-20">
+                <div className="space-y-1.5 sm:space-y-2 md:space-y-3 flex-1">
+                  <span className="inline-block px-2.5 py-0.5 sm:px-3 sm:py-1 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/30 rounded-full text-[10px] font-bold text-emerald-400 uppercase tracking-widest">{featuredContent.tag}</span>
+                  <h2 className="text-xl sm:text-2xl md:text-4xl font-bold text-white leading-tight max-w-2xl">{featuredContent.title}</h2>
+                  <p className="text-zinc-300 text-xs sm:text-sm md:text-base max-w-xl line-clamp-2">{featuredContent.description}</p>
                 </div>
-                <div className="shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-full bg-emerald-500/10 backdrop-blur-md border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
-                  <ArrowRight size={24} className="md:w-7 md:h-7" />
+                <div className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-emerald-500/10 backdrop-blur-md border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
+                  <ArrowRight size={20} className="sm:w-6 sm:h-6 md:w-7 md:h-7" />
                 </div>
               </div>
             </Link>

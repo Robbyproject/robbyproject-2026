@@ -185,8 +185,7 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
         initial={{ scale: 0.3, opacity: 0, borderRadius: 40 }}
         animate={{ scale: 1, opacity: 1, borderRadius: 4 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-col border border-emerald-500/20 shadow-[0_0_60px_rgba(16,185,129,0.08)] bg-[#0a0a0a] overflow-hidden"
-        style={{ width: "72%", aspectRatio: "16/9", minWidth: 480, minHeight: 270 }}
+        className="flex flex-col w-[94%] sm:w-[82%] md:w-[72%] max-w-[1100px] aspect-square sm:aspect-video min-h-[220px] max-h-[90vh] border border-emerald-500/20 shadow-[0_0_60px_rgba(16,185,129,0.08)] bg-[#0a0a0a] overflow-hidden"
       >
 
         {/* ── Title bar ── */}

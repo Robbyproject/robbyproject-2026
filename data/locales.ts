@@ -181,6 +181,30 @@ export interface TranslationKeys {
 
   // --- ENTERTAINMENT (optional, used by Sidebar) ---
   nav_entertainment?: string;
+
+  // --- DETAIL PAGES ---
+  detail_view: string;
+  detail_back: string;
+  detail_error: string;
+  detail_notfound: string;
+  detail_about: string;
+  detail_zoom: string;
+  detail_order: string;
+  detail_free: string;
+  detail_demo: string;
+  detail_tags: string;
+  detail_traits: string;
+  detail_genres: string;
+  detail_skills: string;
+  detail_visit: string;
+  detail_repo: string;
+  detail_tools: string;
+  detail_verify: string;
+  detail_section_store: string;
+  detail_section_waifu: string;
+  detail_section_anime: string;
+  detail_section_projects: string;
+  detail_section_achievements: string;
 }
 
 export const translations: Record<string, TranslationKeys> = {
@@ -363,7 +387,31 @@ export const translations: Record<string, TranslationKeys> = {
     // --- COMMON ---
     copyright: "COPYRIGHT",
     rights: "All rights reserved.",
-    built_with: "Built with Next.js"
+    built_with: "Built with Next.js",
+
+    // --- DETAIL PAGES ---
+    detail_view: "View Details",
+    detail_back: "Back",
+    detail_error: "Failed to load details.",
+    detail_notfound: "This item could not be found.",
+    detail_about: "About",
+    detail_zoom: "Zoom",
+    detail_order: "Order Now",
+    detail_free: "FREE",
+    detail_demo: "Live Demo",
+    detail_tags: "Features",
+    detail_traits: "Traits",
+    detail_genres: "Genres",
+    detail_skills: "Skills",
+    detail_visit: "Visit Page",
+    detail_repo: "Source Code",
+    detail_tools: "Tech Stack",
+    detail_verify: "Verify Credential",
+    detail_section_store: "Store",
+    detail_section_waifu: "Waifu",
+    detail_section_anime: "Anime",
+    detail_section_projects: "Projects",
+    detail_section_achievements: "Achievements"
   },
 
   id: {
@@ -545,6 +593,30 @@ export const translations: Record<string, TranslationKeys> = {
     // --- COMMON ---
     copyright: "HAK CIPTA",
     rights: "Hak cipta dilindungi.",
-    built_with: "Dibuat dengan Next.js"
+    built_with: "Dibuat dengan Next.js",
+
+    // --- DETAIL PAGES ---
+    detail_view: "Lihat Detail",
+    detail_back: "Kembali",
+    detail_error: "Gagal memuat detail.",
+    detail_notfound: "Item ini tidak ditemukan.",
+    detail_about: "Tentang",
+    detail_zoom: "Perbesar",
+    detail_order: "Pesan Sekarang",
+    detail_free: "GRATIS",
+    detail_demo: "Demo Langsung",
+    detail_tags: "Fitur",
+    detail_traits: "Sifat",
+    detail_genres: "Genre",
+    detail_skills: "Keahlian",
+    detail_visit: "Kunjungi Halaman",
+    detail_repo: "Kode Sumber",
+    detail_tools: "Teknologi",
+    detail_verify: "Verifikasi Kredensial",
+    detail_section_store: "Store",
+    detail_section_waifu: "Waifu",
+    detail_section_anime: "Anime",
+    detail_section_projects: "Proyek",
+    detail_section_achievements: "Pencapaian"
   }
 };
