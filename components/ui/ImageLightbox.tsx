@@ -1,38 +1,71 @@
 "use client";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { X } from "lucide-react";
 
 interface ImageLightboxProps {
   image: string | null;
   onClose: () => void;
 }
 
+/**
+ * Lightbox layar penuh untuk gambar detail (project, waifu, store, anime, achievement).
+ *
+ * Kenapa pakai portal ke <body>?
+ * Komponen ini dipasang di dalam <motion.div> DetailShell yang punya `transform`
+ * (animasi `y`). Dalam CSS, ancestor bert-transform jadi "containing block" untuk
+ * elemen `position: fixed`, sehingga overlay malah menempel di kotak motion.div
+ * (bukan viewport) → di mobile gambarnya tertutup & harus di-scroll dulu.
+ * Dengan portal ke <body>, overlay selalu relatif viewport di semua perangkat.
+ */
 export default function ImageLightbox({ image, onClose }: ImageLightboxProps) {
-    if (!image) return null;
-    return (
-        <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[1000] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
-            onClick={onClose}
-        >
-            <button onClick={onClose} className="absolute top-6 right-6 text-white hover:text-red-500 transition bg-black/50 p-2 rounded-full border border-white/20 z-50">
-                <X size={32} />
-            </button>
+    // Hindari hydration mismatch: portal hanya boleh dibuat di browser.
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
 
+    // Kunci scroll background + dukung tombol ESC selama lightbox aktif.
+    useEffect(() => {
+        if (!image) return;
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose();
+        };
+        window.addEventListener("keydown", onKey);
+        return () => {
+            document.body.style.overflow = prevOverflow;
+            window.removeEventListener("keydown", onKey);
+        };
+    }, [image, onClose]);
+
+    if (!image || !mounted) return null;
+
+    return createPortal(
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            // h-[100dvh] akomodasi toolbar browser mobile (lebih akurat dari 100vh);
+            // inset-0 sebagai fallback untuk browser tanpa dukungan dvh.
+            className="fixed inset-0 z-[1000] h-[100dvh] max-h-[100dvh] w-screen bg-black/95 backdrop-blur-xl flex items-center justify-center p-3 sm:p-4"
+        >
             <motion.div
-                initial={{ scale: 0.8 }} animate={{ scale: 1 }}
-                className="relative w-full max-w-6xl h-[60vh] md:h-[85vh] rounded-lg overflow-hidden shadow-2xl border border-white/10"
+                initial={{ scale: 0.92 }}
+                animate={{ scale: 1 }}
                 onClick={(e) => e.stopPropagation()}
+                className="relative w-full h-full max-w-6xl flex items-center justify-center"
             >
                 <Image
                     src={image}
                     alt="Preview"
                     fill
-                    className="object-contain"
                     sizes="100vw"
+                    className="object-contain"
                 />
             </motion.div>
-        </motion.div>
+        </motion.div>,
+        document.body
     );
 }
