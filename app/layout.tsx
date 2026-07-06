@@ -5,8 +5,10 @@ import NextTopLoader from "nextjs-toploader";
 import SystemLayout from "@/components/layout/SystemLayout";
 import ContentWrapper from "@/components/layout/ContentWrapper";
 import AnalyticsTracker from "@/components/features/AnalyticsTracker";
+import { Toaster } from "sonner"; 
+import NotificationPopup from "@/components/features/NotificationPopup"; 
 
-// Optimasi Font: Gunakan variable untuk integrasi Tailwind yang lebih baik
+// Konfigurasi Font yang sudah diperbaiki
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-jakarta",
@@ -48,8 +50,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {children}
             </ContentWrapper>
           </SystemLayout>
-
         </AppProviders>
+        
+        {/* Sistem Notifikasi Pop-up */}
+        <Toaster position="bottom-right" richColors />
+        <NotificationPopup />
+        
       </body>
     </html>
   );

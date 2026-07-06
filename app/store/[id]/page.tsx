@@ -18,6 +18,9 @@ export default function StoreDetailPage() {
     const { data: item, loading, error } = useDetailItem("products", id);
 
     const price = item?.price ?? 0;
+    
+    // Format teks harga agar sesuai dengan tampilan UI saat dikirim ke halaman form
+    const displayPrice = price === 0 ? (t?.detail_free || "FREE") : `Rp ${formatRupiah(price)}`;
 
     return (
         <DetailShell
@@ -52,7 +55,7 @@ export default function StoreDetailPage() {
                     {/* PRICE */}
                     <div className="inline-flex items-baseline gap-2">
                         <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                            {price === 0 ? (t?.detail_free || "FREE") : `Rp ${formatRupiah(price)}`}
+                            {displayPrice}
                         </span>
                     </div>
 
@@ -80,12 +83,14 @@ export default function StoreDetailPage() {
 
                     {/* ACTIONS */}
                     <div className="flex flex-wrap gap-3 pt-2">
+                        {/* SEKARANG SUDAH DITAMBAHKAN: Parameter image untuk memunculkan gambar di form checkout */}
                         <ActionButton
-                            href={`/contact?product=${encodeURIComponent(item?.name || "")}`}
+                            href={`/store/order?title=${encodeURIComponent(item?.name || "")}&price=${encodeURIComponent(displayPrice)}&image=${encodeURIComponent(item?.image_url || "")}`}
                             icon={<ArrowRight size={16} />}
                         >
                             {t?.detail_order || "Order Now"}
                         </ActionButton>
+                        
                         {item?.demo_url && (
                             <ActionButton
                                 href={item.demo_url}

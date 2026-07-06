@@ -244,7 +244,6 @@ export default function StorePage() {
                     </button>
                 </div>
             ) : (
-                // Stagger grid — Framer Motion handles enter/exit/reorder natively
                 <motion.div
                     variants={containerVariants}
                     initial="hidden"
@@ -301,7 +300,6 @@ const ProductCard = memo(function ProductCard({ item }: { item: any }) {
     const router = useRouter();
     const goToDetail = () => router.push(`/store/${item.id}`);
 
-    // Refs for glow — updated imperatively, NO state = NO re-renders on mouse move
     const glowRef = useRef<HTMLDivElement>(null);
     const cardRef = useRef<HTMLDivElement>(null);
 
@@ -310,10 +308,12 @@ const ProductCard = memo(function ProductCard({ item }: { item: any }) {
         const rect = cardRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        // Direct DOM update — zero React re-renders
         glowRef.current.style.background =
             `radial-gradient(300px circle at ${x}px ${y}px, rgba(16,185,129,0.08), transparent 50%)`;
     };
+
+    // Format teks harga agar sesuai dengan badge dan parameter URL form
+    const displayPrice = price === 0 ? "FREE" : `Rp ${formatRupiah(price)}`;
 
     return (
         <motion.div
@@ -371,7 +371,7 @@ const ProductCard = memo(function ProductCard({ item }: { item: any }) {
 
                         {/* Price Badge */}
                         <div className="absolute top-3 right-3 px-3 py-1 text-xs font-bold text-zinc-900 dark:text-white bg-white/90 dark:bg-black/80 backdrop-blur-md rounded-lg border border-black/5 dark:border-white/10 shadow-sm transition-transform duration-300 group-hover:scale-105 origin-top-right">
-                            {price === 0 ? "FREE" : `Rp ${formatRupiah(price)}`}
+                            {displayPrice}
                         </div>
 
                         {/* Hover Overlay */}
@@ -400,8 +400,11 @@ const ProductCard = memo(function ProductCard({ item }: { item: any }) {
                         <button
                             type="button"
                             onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(`/contact?product=${encodeURIComponent(item.name)}`);
+                                // Mencegah klik tombol memicu fungsi 'goToDetail' pada wrapper card
+                                e.stopPropagation(); 
+                                
+                                // SUDAH DITAMBAHKAN: Parameter image agar gambar muncul di halaman checkout
+                                router.push(`/store/order?title=${encodeURIComponent(item.name || "")}&price=${encodeURIComponent(displayPrice)}&image=${encodeURIComponent(item.image_url || "")}`);
                             }}
                             className="store-btn-shimmer
                                 flex items-center justify-center gap-2 w-full py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300
